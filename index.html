@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>두근두근 개체군 키우기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 56.25vw; /* 16:9 비율 */
+            position: relative;
+            background-image: url('mainbackground.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #87ceeb; /* 임시 배경색 - 하늘색 */
+            display: flex;
+            flex-direction: column;
+            font-size: calc(100vw / 50); /* 기준 폰트 크기 설정 */
+        }
+
+        .title {
+            font-size: 4em; /* 기준 폰트의 4배 */
+            font-weight: 700;
+            color: white;
+            text-align: left;
+            padding: 1.5em 2em;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            font-family: 'Arial', 'Helvetica', sans-serif;
+        }
+
+        .button-container {
+            position: absolute;
+            bottom: 2.5em;
+            right: 3em;
+            display: flex;
+            flex-direction: column;
+            gap: 0.7em;
+        }
+
+        .menu-button {
+            padding: 1em 2.5em;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: white;
+            border: none;
+            border-radius: 2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+            letter-spacing: 0.02em;
+            min-width: 8em;
+            box-shadow: 0 0.2em 1em rgba(0, 0, 0, 0.15);
+        }
+
+        /* 튜토리얼 버튼 - 핑크-퍼플 그라데이션 */
+        .tutorial-btn {
+            background: linear-gradient(135deg, #ff6b9d, #f093fb);
+        }
+
+        .tutorial-btn:hover {
+            background: linear-gradient(135deg, #ff5a8d, #f083eb);
+            transform: translateY(-0.1em);
+            box-shadow: 0 0.3em 1.5em rgba(0, 0, 0, 0.2);
+        }
+
+        /* 실전 모드 버튼 - 블루-퍼플 그라데이션 */
+        .game-btn {
+            background: linear-gradient(135deg, #a8c8ff, #667eea);
+        }
+
+        .game-btn:hover {
+            background: linear-gradient(135deg, #98b8ef, #5e7dea);
+            transform: translateY(-0.1em);
+            box-shadow: 0 0.3em 1.5em rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-button:active {
+            transform: translateY(-0.05em);
+            box-shadow: 0 0.15em 0.8em rgba(0, 0, 0, 0.25);
+        }
+
+        /* 세로가 더 긴 화면일 때 */
+        @media screen and (min-aspect-ratio: 16/9) {
+            .game-container {
+                width: 177.78vh; /* 16:9 비율 */
+                height: 100vh;
+                font-size: calc(100vh / 28); /* 세로 기준으로 폰트 크기 조정 */
+            }
+        }
+
+        /* 모바일 대응 제거 - 항상 16:9 고정 */
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="title">
+            두근두근<br>
+            개체군 키우기
+        </div>
+        
+        <div class="button-container">
+            <a href="tutorial.html" class="menu-button tutorial-btn">튜토리얼</a>
+            <a href="game.html" class="menu-button game-btn">실전 모드</a>
+        </div>
+    </div>
+</body>
+</html>

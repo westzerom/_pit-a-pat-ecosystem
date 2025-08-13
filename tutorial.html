@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>튜토리얼 - 두근두근 개체군 키우기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 50%, #8e44ad 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.05) 0px,
+                rgba(255, 255, 255, 0.05) 2px,
+                transparent 2px,
+                transparent 12px
+            );
+            pointer-events: none;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 56.25vw;
+            max-width: 1280px;
+            max-height: 720px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 2em;
+            box-shadow: 
+                0 0 0 3px rgba(255, 255, 255, 0.2),
+                0 1.5em 4em rgba(0, 0, 0, 0.2),
+                inset 0 0.06em 0 rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(0.6em);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: calc(1vw + 0.5vh);
+        }
+
+        @media (min-width: 1280px) {
+            .game-container {
+                font-size: 16px;
+            }
+        }
+
+        /* 세로가 더 긴 화면일 때 */
+        @media screen and (min-aspect-ratio: 16/9) {
+            .game-container {
+                width: 177.78vh;
+                height: 100vh;
+            }
+        }
+
+        .status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1em 2em;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            backdrop-filter: blur(0.3em);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 2.5em;
+            height: 2.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            box-shadow: 0 0.25em 0.75em rgba(0, 0, 0, 0.1);
+        }
+
+        .back-btn:hover {
+            background: white;
+            transform: translateY(-0.06em);
+            box-shadow: 0 0.37em 1em rgba(0, 0, 0, 0.15);
+        }
+
+        .status-info {
+            display: flex;
+            gap: 1em;
+            align-items: center;
+            transition: visibility 0s, opacity 0.3s linear;
+        }
+
+        .population-display {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5em 1em;
+            border-radius: 1em;
+            font-weight: 700;
+            color: #2D3748;
+            font-size: 0.9em;
+            box-shadow: 0 0.25em 0.75em rgba(0, 0, 0, 0.1);
+        }
+
+        .graph-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border: none;
+            border-radius: 0.8em;
+            padding: 0.5em 1em;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8em;
+            box-shadow: 0 0.25em 0.75em rgba(72, 187, 120, 0.3);
+        }
+
+        .graph-btn:hover:not(:disabled) {
+            transform: translateY(-0.06em);
+            box-shadow: 0 0.37em 1em rgba(72, 187, 120, 0.4);
+        }
+
+        .graph-btn:disabled {
+            background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .character-area {
+            position: absolute;
+            top: 4em;
+            bottom: 8em;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1em 2em;
+        }
+
+        .character {
+            width: 18em;
+            height: 18em;
+            background-image: url('otter_main.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            animation: bounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 0.4em 1em rgba(0, 0, 0, 0.15));
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotate(0deg); }
+            40% { transform: translateY(-0.8em) rotate(-2deg); }
+            60% { transform: translateY(-0.4em) rotate(1deg); }
+        }
+
+        .dialogue-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 1.5em 1.5em 0 0;
+            padding: 1.5em;
+            min-height: 8em;
+            box-shadow: 
+                0 -0.4em 1.2em rgba(0, 0, 0, 0.1),
+                inset 0 0.06em 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .dialogue-text {
+            font-size: 1em;
+            line-height: 1.5;
+            color: #2D3748;
+            margin-bottom: 1em;
+            min-height: 3.5em;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .dialogue-actions {
+            display: flex;
+            gap: 0.8em;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            width: 2.5em;
+            height: 2.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 0.3em 0.8em rgba(102, 126, 234, 0.3),
+                inset 0 0.06em 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .next-btn:hover:not(:disabled) {
+            transform: translateY(-0.12em) scale(1.05);
+            box-shadow: 
+                0 0.75em 1.5em rgba(102, 126, 234, 0.4),
+                inset 0 0.06em 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .next-btn:disabled {
+            cursor: not-allowed;
+            background: #ccc;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border: none;
+            border-radius: 1.2em;
+            padding: 0.8em 1.5em;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            box-shadow: 0 0.37em 0.9em rgba(72, 187, 120, 0.3);
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-0.06em);
+            box-shadow: 0 0.5em 1.2em rgba(72, 187, 120, 0.4);
+        }
+
+        .action-btn:disabled {
+            background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+            box-shadow: 0 0.37em 0.9em rgba(159, 122, 234, 0.3);
+        }
+
+        .action-btn.secondary:hover:not(:disabled) {
+            box-shadow: 0 0.5em 1.2em rgba(159, 122, 234, 0.4);
+        }
+        
+        .mode-selection {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2em;
+            gap: 1em;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 20;
+        }
+
+        .mode-selection.active {
+            display: flex;
+        }
+
+        .mode-selection h2 {
+            text-align: center;
+            color: #2D3748;
+            margin-bottom: 1em;
+            font-size: 1.5em;
+        }
+        
+        .mode-selection > .mode-btn,
+        .mode-selection > .action-btn {
+            width: 60%;
+            max-width: 300px;
+        }
+
+        .mode-btn {
+            background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%);
+            border: none;
+            border-radius: 1.5em;
+            padding: 1.2em 2em;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .mode-btn:hover::before {
+            left: 100%;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-0.12em);
+            box-shadow: 0 0.6em 1.5em rgba(237, 100, 166, 0.4);
+        }
+
+        .mode-btn.lab {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .mode-btn.lab:hover {
+            box-shadow: 0 0.6em 1.5em rgba(102, 126, 234, 0.4);
+        }
+
+        .graph-modal, .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 2em;
+        }
+
+        .history-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 2em;
+        }
+
+        .graph-content, .loading-content {
+            background: white;
+            padding: 2em;
+            border-radius: 1.5em;
+            box-shadow: 0 1.2em 2.4em rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .graph-content { 
+            width: 90%; 
+            max-width: 35em; 
+            max-height: 80%;
+        }
+        
+        .loading-content { 
+            text-align: center; 
+            font-size: 1.5em; 
+            font-weight: 700; 
+            color: #2D3748; 
+            padding: 3em; 
+        }
+
+        .graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5em;
+        }
+
+        .graph-title { 
+            font-size: 1.3em; 
+            font-weight: 700; 
+            color: #2D3748; 
+        }
+
+        .close-btn {
+            background: #e53e3e; 
+            border: none; 
+            border-radius: 50%; 
+            width: 2em; 
+            height: 2em;
+            color: white; 
+            cursor: pointer; 
+            font-size: 1.2em; 
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover { 
+            background: #c53030; 
+            transform: scale(1.1); 
+        }
+
+        .history-content {
+            max-height: 300px; 
+            overflow-y: auto; 
+            padding: 1em; 
+            background: #f7fafc; 
+            border-radius: 0.5em; 
+            font-family: monospace; 
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .typing-cursor { 
+            animation: blink 1s infinite; 
+        }
+        
+        @keyframes blink { 
+            0%, 50% { opacity: 1; } 
+            51%, 100% { opacity: 0; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="status-bar">
+            <button class="back-btn" id="backBtn">🏠</button>
+            <div class="status-info" id="statusInfo">
+                <div class="population-display" id="populationDisplay">개체수: 50마리</div>
+                <button class="graph-btn" id="graphBtn" disabled>개체수 그래프</button>
+            </div>
+        </div>
+
+        <div class="character-area" id="characterArea">
+            <div class="character" id="character"></div>
+        </div>
+
+        <div class="dialogue-container" id="dialogueContainer">
+            <div class="dialogue-text" id="dialogueText">뀨뀨. 안녕 나는 귀여운 해달이야.</div>
+            <div class="dialogue-actions" id="dialogueActions">
+                <button class="next-btn" id="nextBtn">🔽</button>
+            </div>
+        </div>
+
+        <div class="mode-selection" id="modeSelection">
+            <h2>모드를 선택해주세요!</h2>
+            <button class="mode-btn" data-mode="surreal">🌟 초현실 모드</button>
+            <button class="mode-btn lab" data-mode="lab">🔬 실험실 모드</button>
+            <button class="action-btn secondary" id="goToMainBtn" style="margin-top: 1em;">메인 메뉴로</button>
+        </div>
+
+        <div class="graph-modal" id="graphModal">
+             <div class="graph-content">
+                <div class="graph-header">
+                    <div class="graph-title">개체수 변화 그래프</div>
+                    <button class="close-btn" id="closeGraphBtn">×</button>
+                </div>
+                <canvas class="graph-canvas" id="graphCanvas" style="width: 100%; height: 20em; border: 1px solid #e2e8f0; border-radius: 0.5em;"></canvas>
+            </div>
+        </div>
+
+        <div class="history-modal" id="historyModal">
+             <div class="graph-content">
+                <div class="graph-header">
+                    <div class="graph-title">히스토리</div>
+                    <button class="close-btn" id="closeHistoryBtn">×</button>
+                </div>
+                <div class="history-content" id="historyContent"></div>
+            </div>
+        </div>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-content" id="loadingText">번식 중...</div>
+        </div>
+    </div>
+
+    <script>
+        // DOM 요소들
+        const dialogueTextEl = document.getElementById('dialogueText');
+        const dialogueActionsEl = document.getElementById('dialogueActions');
+        const dialogueContainerEl = document.getElementById('dialogueContainer');
+        const modeSelectionEl = document.getElementById('modeSelection');
+        const statusInfoEl = document.getElementById('statusInfo');
+        const populationDisplayEl = document.getElementById('populationDisplay');
+        const graphBtnEl = document.getElementById('graphBtn');
+        const characterAreaEl = document.getElementById('characterArea');
+        const graphModalEl = document.getElementById('graphModal');
+        const historyModalEl = document.getElementById('historyModal');
+        const loadingOverlayEl = document.getElementById('loadingOverlay');
+        const loadingTextEl = document.getElementById('loadingText');
+        const backBtnEl = document.getElementById('backBtn');
+        const historyContentEl = document.getElementById('historyContent');
+
+        // 게임 상태
+        let gameState = {
+            currentStep: 0,
+            currentYear: 0,
+            population: 50,
+            populationHistory: [50],
+            currentMode: null,
+            dialogueStep: 0,
+            isTyping: false,
+            dialogueComplete: false
+        };
+
+        // 대사 데이터
+        const tutorialDialogues = [
+            "뀨뀨. 안녕 나는 귀여운 해달이야.", 
+            "개체군은 한 지역에서 같은 종의 생물이 무리를 이룬 집단을 말해.", 
+            "우리 해달 개체군이 시간에 따라 얼마나 성장하는지 볼래?", 
+            "다음 화면에서 모드를 선택해줘!"
+        ];
+        
+        const supernaturalDialogues = [
+            "뀨뀨. 나는 귀여운 해달이고 여긴 초현실 세상이야.", 
+            "무한한 먹이와 무한한 공간!", 
+            "초현실 세상에서 우리 해달 개체군은 계속 성장해나갈 수 있어.", 
+            "지금 해달 개체군은 50마리 있어.", 
+            "시간이 흐름에 따라 우리 해달 개체군이 어떻게 성장하는지 볼래?", 
+            "시간을 흐르게 하고 싶다면 '1년 후~' 버튼을 클릭하고,", 
+            "개체수 변화를 보고 싶으면 오른쪽 상단의 '개체수 그래프' 버튼을 클릭해줘."
+        ];
+        
+        const labDialogues = [
+            "뀨뀨. 나는 귀여운 해달이고 여긴 실험실 세상이야.", 
+            "무한한 먹이! 하지만 실험실이기 때문에 공간이 유한해...", 
+            "과연 실험실 세상에서도 우리는 엄청난 속도로 성장해나갈 수 있을까?", 
+            "지금 해달 개체군은 50마리 있어.", 
+            "시간이 흐름에 따라 우리 해달 개체군이 어떻게 성장하는지 볼래?", 
+            "시간을 흐르게 하고 싶다면 '1년 후~' 버튼을 클릭하고,", 
+            "개체수 변화를 보고 싶으면 오른쪽 상단의 '개체수 그래프' 버튼을 클릭해줘."
+        ];
+        
+        function setActionButtonsState(disabled) {
+            dialogueActionsEl.querySelectorAll('button').forEach(button => {
+                button.disabled = disabled;
+            });
+        }
+
+        function typeText(element, text, callback) {
+            if (gameState.isTyping) return;
+            gameState.isTyping = true;
+            setActionButtonsState(true);
+
+            element.innerHTML = '';
+            let i = 0;
+            const cursor = '<span class="typing-cursor">|</span>';
+            
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML = text.substring(0, i + 1) + cursor;
+                    i++;
+                    setTimeout(type, 50);
+                } else {
+                    element.innerHTML = text;
+                    gameState.isTyping = false;
+                    setActionButtonsState(false);
+                    if (callback) callback();
+                }
+            }
+            type();
+        }
+
+        function nextDialogue() {
+            if (gameState.isTyping) return;
+            
+            if (gameState.currentStep === 0) {
+                gameState.dialogueStep++;
+                if (gameState.dialogueStep < tutorialDialogues.length) {
+                    typeText(dialogueTextEl, tutorialDialogues[gameState.dialogueStep]);
+                } else {
+                    showModeSelection();
+                }
+            } else {
+                const dialogues = gameState.currentMode === 'surreal' ? supernaturalDialogues : labDialogues;
+                gameState.dialogueStep++;
+                
+                if (gameState.dialogueStep < dialogues.length) {
+                    typeText(dialogueTextEl, dialogues[gameState.dialogueStep]);
+                } else {
+                    gameState.dialogueComplete = true;
+                    showGameActions();
+                    enableButtons();
+                }
+            }
+        }
+
+        function enableButtons() { 
+            graphBtnEl.disabled = false; 
+        }
+        
+        function disableButtons() { 
+            graphBtnEl.disabled = true; 
+        }
+
+        function showModeSelection() {
+            dialogueContainerEl.style.display = 'none';
+            modeSelectionEl.classList.add('active');
+            characterAreaEl.style.display = 'none';
+        }
+
+        function startMode(mode) {
+            gameState.currentMode = mode;
+            gameState.currentStep = 1;
+            gameState.dialogueStep = 0;
+            gameState.dialogueComplete = false;
+            
+            modeSelectionEl.classList.remove('active');
+            dialogueContainerEl.style.display = 'block';
+            characterAreaEl.style.display = 'flex';
+            statusInfoEl.style.visibility = 'visible';
+            backBtnEl.textContent = '←';
+            
+            dialogueActionsEl.innerHTML = `<button class="next-btn" id="nextBtn">🔽</button>`;
+            document.getElementById('nextBtn').addEventListener('click', nextDialogue);
+
+            const dialogues = mode === 'surreal' ? supernaturalDialogues : labDialogues;
+            typeText(dialogueTextEl, dialogues[0]);
+            
+            updateDisplay();
+            disableButtons();
+        }
+
+        function showGameActions() {
+            dialogueActionsEl.innerHTML = `<button class="action-btn" id="nextYearBtn">1년 후~</button><button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>`;
+            document.getElementById('nextYearBtn').addEventListener('click', nextYear);
+            document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+        }
+
+        function nextYear() {
+            if (!gameState.dialogueComplete) return;
+            showLoading();
+            setTimeout(() => {
+                gameState.currentYear++;
+                
+                if (gameState.currentMode === 'surreal') {
+                    gameState.population *= 1.6;
+                } else if (gameState.currentMode === 'lab') {
+                    const r = 0.8; 
+                    const K = 500; 
+                    const N = gameState.population;
+                    const growthRate = r * (1 - N / K);
+                    gameState.population += (growthRate * N);
+                    if (gameState.population > K) gameState.population = K;
+                }
+                
+                gameState.populationHistory.push(gameState.population);
+                updateDisplay();
+                updateCharacterExpression();
+                hideLoading();
+                showYearlyDialogue();
+            }, 1500);
+        }
+
+        function showYearlyDialogue() {
+            let dialogue;
+            const pop = Math.floor(gameState.population);
+            const prevPop = gameState.populationHistory[gameState.currentYear - 1] || pop;
+
+            if (gameState.currentMode === 'surreal') {
+                if (gameState.currentYear >= 10) {
+                    dialogue = `헤헤. 지금 우리는 ${pop}마리 있어. 무한한 먹이와 무한한 공간 속에서 우리는 성장했어. 초현실 세상에서의 개체수 변화를 볼 만큼 본 것 같다면, '다른 모드' 버튼을 눌러 다른 모드를 플레이해봐.`;
+                } else {
+                    dialogue = `헤헤. 지금 우리는 ${pop}마리 있어. 무한한 먹이와 무한한 공간 속에서 우리는 성장했어.`;
+                }
+            } else {
+                const growthRate = pop / prevPop;
+                if (gameState.currentYear >= 10) {
+                    if (pop >= 495) {
+                        dialogue = `개체군 크기가 ${pop}마리로... 더 이상 늘어나지 않는 것 같아. 공간의 한계인가봐. 실험실 세상에서의 개체수 변화를 볼 만큼 본 것 같다면, '다른 모드' 버튼을 눌러 다른 모드를 플레이해봐.`;
+                        updateCharacterExpression('concern');
+                    } else if (growthRate < 1.1) {
+                        dialogue = `개체군 크기가 ${pop}마리로 커지긴 했는데... 성장 속도가 점점 느려지는 것 같지? 실험실 세상에서의 개체수 변화를 볼 만큼 본 것 같다면, '다른 모드' 버튼을 눌러 다른 모드를 플레이해봐.`;
+                        updateCharacterExpression('concern');
+                    } else {
+                        dialogue = `헤헤. 지금 우리는 ${pop}마리 있어. 계속 성장하고 있어! 실험실 세상에서의 개체수 변화를 볼 만큼 본 것 같다면, '다른 모드' 버튼을 눌러 다른 모드를 플레이해봐.`;
+                    }
+                } else {
+                    if (pop >= 495) {
+                        dialogue = `개체군 크기가 ${pop}마리로... 더 이상 늘어나지 않는 것 같아. 공간의 한계인가봐.`;
+                        updateCharacterExpression('concern');
+                    } else if (growthRate < 1.1 && gameState.currentYear > 1) {
+                        dialogue = `개체군 크기가 ${pop}마리로 커지긴 했는데... 성장 속도가 점점 느려지는 것 같지?`;
+                        updateCharacterExpression('concern');
+                    } else {
+                        dialogue = `헤헤. 지금 우리는 ${pop}마리 있어. 계속 성장하고 있어!`;
+                    }
+                }
+            }
+            
+            typeText(dialogueTextEl, dialogue, handleDialogueEnd);
+        }
+
+        function handleDialogueEnd() {
+            if (gameState.currentYear >= 10) {
+                 dialogueActionsEl.innerHTML = `
+                    <button class="action-btn secondary" id="resetBtn">다른 모드</button>
+                    <button class="action-btn" id="nextYearBtn">1년 후~</button>
+                    <button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>`;
+                document.getElementById('resetBtn').addEventListener('click', resetGame);
+                document.getElementById('nextYearBtn').addEventListener('click', nextYear);
+                document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+            } else {
+                showGameActions();
+            }
+        }
+
+        function updateCharacterExpression(mood = 'normal') {
+            characterAreaEl.querySelector('.character').style.filter = mood === 'concern' 
+                ? 'drop-shadow(0 0.4em 1em rgba(0, 0, 0, 0.15)) sepia(0.3) hue-rotate(340deg)' 
+                : 'drop-shadow(0 0.4em 1em rgba(0, 0, 0, 0.15))';
+        }
+
+        function updateDisplay() {
+            populationDisplayEl.textContent = `${gameState.currentYear}년차 - ${Math.floor(gameState.population)}마리`;
+        }
+
+        function showLoading() {
+            loadingOverlayEl.style.display = 'flex';
+            typeText(loadingTextEl, '번식 중...');
+        }
+        
+        function hideLoading() { 
+            loadingOverlayEl.style.display = 'none'; 
+        }
+
+        function showGraph() {
+    if (!gameState.dialogueComplete) return;
+
+    graphModalEl.style.display = 'flex';
+    
+    setTimeout(() => {
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 캔버스 크기를 실제 표시 크기에 맞춤 (고해상도 대응)
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        
+        const width = rect.width;
+        const height = rect.height;
+        const padding = 60;
+        const graphWidth = width - 2 * padding;
+        const graphHeight = height - 2 * padding;
+        
+        // 배경 그리기
+        ctx.fillStyle = '#fafbfc';
+        ctx.fillRect(0, 0, width, height);
+        
+        // 최대값 찾기
+        const maxPop = gameState.currentMode === 'lab' ? 
+            Math.max(...gameState.populationHistory, 500 + 50) : 
+            Math.max(...gameState.populationHistory);
+        const maxYear = gameState.populationHistory.length - 1;
+        
+        // 격자선 그리기
+        ctx.strokeStyle = '#e8ecf0';
+        ctx.lineWidth = 1;
+        
+        // 세로 격자선 (연도)
+        const yearSteps = Math.min(10, maxYear || 1);
+        for (let i = 0; i <= yearSteps; i++) {
+            const x = padding + (i / yearSteps) * graphWidth;
+            ctx.beginPath();
+            ctx.moveTo(x, padding);
+            ctx.lineTo(x, height - padding);
+            ctx.stroke();
+        }
+        
+        // 가로 격자선 (개체수)
+        const popSteps = 8;
+        for (let i = 0; i <= popSteps; i++) {
+            const y = padding + (i / popSteps) * graphHeight;
+            ctx.beginPath();
+            ctx.moveTo(padding, y);
+            ctx.lineTo(width - padding, y);
+            ctx.stroke();
+        }
+        
+        // 실험실 모드: 환경수용력 선 그리기
+        if (gameState.currentMode === 'lab') {
+            const K = 500;
+            const kY = height - padding - (K / maxPop) * graphHeight;
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 4]);
+            ctx.beginPath();
+            ctx.moveTo(padding, kY);
+            ctx.lineTo(width - padding, kY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // 환경수용력 라벨
+            ctx.fillStyle = '#ff6b6b';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`환경수용력 (${K}마리)`, padding + 10, kY - 8);
+        }
+        
+        // 축 그리기
+        ctx.strokeStyle = '#2d3748';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Y축
+        ctx.moveTo(padding, padding);
+        ctx.lineTo(padding, height - padding);
+        // X축
+        ctx.lineTo(width - padding, height - padding);
+        ctx.stroke();
+        
+        // 데이터 점들과 선 그리기
+        if (gameState.populationHistory.length > 1) {
+            // 그라디언트 생성
+            const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+            if (gameState.currentMode === 'lab') {
+                gradient.addColorStop(0, '#38a169');
+                gradient.addColorStop(1, '#68d391');
+            } else {
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#9f7aea');
+            }
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            
+            for (let i = 0; i < gameState.populationHistory.length; i++) {
+                const x = padding + (i / maxYear) * graphWidth;
+                const y = height - padding - (gameState.populationHistory[i] / maxPop) * graphHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            // 데이터 점 그리기
+            const pointColor = gameState.currentMode === 'lab' ? '#38a169' : '#667eea';
+            for (let i = 0; i < gameState.populationHistory.length; i++) {
+                const x = padding + (i / maxYear) * graphWidth;
+                const y = height - padding - (gameState.populationHistory[i] / maxPop) * graphHeight;
+                
+                // 점 배경 (흰색)
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // 점 테두리
+                ctx.strokeStyle = pointColor;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 점 내부
+                ctx.fillStyle = pointColor;
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+        
+        // 축 레이블 및 눈금 값
+        ctx.fillStyle = '#4a5568';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        
+        // X축 레이블 (연도)
+        const yearStep = Math.max(1, Math.floor(maxYear / 8));
+        for (let i = 0; i <= maxYear; i += yearStep) {
+            const x = padding + (i / (maxYear || 1)) * graphWidth;
+            ctx.fillText(`${i}년`, x, height - padding + 20);
+        }
+        
+        // Y축 레이블 (개체수)
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= popSteps; i++) {
+            const y = height - padding - (i / popSteps) * graphHeight;
+            const value = Math.round((i / popSteps) * maxPop);
+            ctx.fillText(`${value}`, padding - 15, y + 4);
+        }
+        
+        // 축 제목
+        ctx.fillStyle = '#2d3748';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        
+        // X축 제목
+        ctx.fillText('연도', width / 2, height - 10);
+        
+        // Y축 제목
+        ctx.save();
+        ctx.translate(15, height / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('개체수 (마리)', 0, 0);
+        ctx.restore();
+    }, 100);
+}
+
+        function showHistory() {
+            if (!gameState.dialogueComplete) return;
+
+            historyModalEl.style.display = 'flex';
+            
+            let historyText = '';
+            for (let i = 0; i < gameState.populationHistory.length; i++) {
+                historyText += `${i}년차: ${Math.floor(gameState.populationHistory[i])}마리\n`;
+            }
+            
+            historyContentEl.textContent = historyText;
+        }
+
+        function hideGraph() { 
+            graphModalEl.style.display = 'none'; 
+        }
+
+        function hideHistory() { 
+            historyModalEl.style.display = 'none'; 
+        }
+        
+        function resetGame() { 
+            resetInitialState(); 
+            showModeSelection(); 
+        }
+        
+        function goToMainMenu() { 
+            window.location.href = 'index.html'; 
+        }
+        
+        function goBackToTutorial() {
+            resetInitialState();
+        }
+        
+        function resetInitialState() {
+            dialogueContainerEl.style.display = "block";
+            modeSelectionEl.classList.remove('active');
+            characterAreaEl.style.display = 'flex';
+            statusInfoEl.style.visibility = 'hidden';
+            backBtnEl.textContent = '🏠';
+
+            dialogueActionsEl.innerHTML = `<button class="next-btn" id="nextBtn">🔽</button>`;
+            document.getElementById('nextBtn').addEventListener('click', nextDialogue);
+            
+            Object.assign(gameState, {
+                currentStep: 0, currentYear: 0, population: 50, populationHistory: [50],
+                currentMode: null, dialogueStep: 0, isTyping: false, dialogueComplete: false
+            });
+            updateDisplay();
+            disableButtons();
+            typeText(dialogueTextEl, tutorialDialogues[0]);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 뒤로가기 버튼 클릭 이벤트
+            backBtnEl.addEventListener('click', () => {
+                if (backBtnEl.textContent === '🏠') {
+                    goToMainMenu(); // 홈으로
+                } else {
+                    goBackToTutorial(); // 튜토리얼 초기화면으로
+                }
+            });
+            
+            graphBtnEl.addEventListener('click', showGraph);
+            document.querySelectorAll('.mode-btn').forEach(button => {
+                button.addEventListener('click', () => startMode(button.dataset.mode));
+            });
+            document.getElementById('goToMainBtn').addEventListener('click', goToMainMenu);
+            document.getElementById('closeGraphBtn').addEventListener('click', hideGraph);
+            document.getElementById('closeHistoryBtn').addEventListener('click', hideHistory);
+            document.getElementById('nextBtn').addEventListener('click', nextDialogue);
+            
+            // 초기 상태 설정
+            statusInfoEl.style.visibility = 'hidden';
+            disableButtons();
+        });
+    </script>
+</body>
+</html>
