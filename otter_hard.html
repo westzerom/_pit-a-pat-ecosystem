@@ -188,13 +188,13 @@
 
         .dialogue-container {
             position: absolute;
-            bottom: 0;
+            bottom: 7.5vh;
             left: 0;
             right: 0;
             background: white;
-            border-radius: 1.5em 1.5em 0 0;
+            border-radius: 1.5em 1.5em 1.5em 1.5em;
             padding: 1.5em;
-            min-height: 8em;
+			/*  min-height: 8em; */
             box-shadow: 
                 0 -0.4em 1.2em rgba(0, 0, 0, 0.1),
                 inset 0 0.06em 0 rgba(255, 255, 255, 0.7);
@@ -1136,7 +1136,6 @@ function chooseResearchOption(choice) {
         
         if (success) {
             playPositiveSound();
-            showResultAnimation(true, () => {
                 const successTexts = [
                     "성게 인공 증식 연구가 대성공하였다!",
                     "[효과] 성게 개체수 40% 증가 및 해달 개체수 10% 증가"
@@ -1146,10 +1145,8 @@ function chooseResearchOption(choice) {
                 gameState.population *= 1.1; // 10% 증가
                 gameState.historyEvents.push(`${gameState.currentYear}년차: 성게 인공 증식 연구 성공으로 성게 개체수 40% 증가 및 해달 개체수 10% 증가`);
                 showEventResults(successTexts, true);
-            });
         } else {
             playNegativeSound();
-            showResultAnimation(false, () => {
                 const failTexts = [
                     "연구가 대성공! …한 줄 알았는데 갑작스러운 성게 개체 수 증가로 인해 생태계 불안정이 나타났다.",
                     "알고 보니 과하게 많은 수의 성게는 해조류를 먹어치워 바다 사막화를 가속시키는 주범으로 작용할 수 있다고…",
@@ -1160,7 +1157,6 @@ function chooseResearchOption(choice) {
                 gameState.population *= 0.7; // 30% 감소
                 gameState.historyEvents.push(`${gameState.currentYear}년차: 성게 인공 증식 연구 성공에 의한 부작용으로, 바다 사막화로 인해 성게 개체수 20% 감소 및 해달 개체수 30% 감소`);
                 showEventResults(failTexts, false);
-            });
         }
     } else {
         // 자연의 힘을 믿는다
