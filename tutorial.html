@@ -168,6 +168,12 @@
             align-items: center;
             justify-content: center;
             padding: 1em 2em;
+			
+			/* 배경 이미지 추가 */
+			background-image: url('images/otter_background.png');
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
         }
 
         .character {
@@ -179,6 +185,7 @@
             background-repeat: no-repeat;
             animation: bounce 2s ease-in-out infinite;
             filter: drop-shadow(0 0.4em 1em rgba(0, 0, 0, 0.15));
+            transition: background-image 0.5s ease;
         }
 
         @keyframes bounce {
@@ -189,13 +196,13 @@
 
         .dialogue-container {
             position: absolute;
-            bottom: 0;
+            bottom: 2em;
             left: 0;
             right: 0;
             background: white;
-            border-radius: 1.5em 1.5em 0 0;
+            border-radius: 1.5em 1.5em 1.5em 1.5em;
             padding: 1.5em;
-            min-height: 8em;
+			/*  min-height: 8em; */
             box-shadow: 
                 0 -0.4em 1.2em rgba(0, 0, 0, 0.1),
                 inset 0 0.06em 0 rgba(255, 255, 255, 0.7);
