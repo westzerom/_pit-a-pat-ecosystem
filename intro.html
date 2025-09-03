@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>두근두근 개체군 키우기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 56.25vw; /* 16:9 비율 */
+            position: relative;
+            background-image: url('images/mainbackground.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #87ceeb; /* 임시 배경색 - 하늘색 */
+            display: flex;
+            flex-direction: column;
+            font-size: calc(100vw / 50); /* 기준 폰트 크기 설정 */
+        }
+
+        .title {
+            font-size: 4em; /* 기준 폰트의 4배 */
+            font-weight: 700;
+            color: white;
+            text-align: left;
+            padding: 1.5em 2em;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            font-family: 'Arial', 'Helvetica', sans-serif;
+        }
+
+        .button-container {
+            position: absolute;
+            bottom: 2.5em;
+            right: 3em;
+            display: flex;
+            flex-direction: column;
+            gap: 0.7em;
+        }
+
+        .menu-button {
+            padding: 1em 2.5em;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: white;
+            border: none;
+            border-radius: 2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+            letter-spacing: 0.02em;
+            min-width: 8em;
+            box-shadow: 0 0.2em 1em rgba(0, 0, 0, 0.15);
+        }
+
+        /* 튜토리얼 버튼 - 핑크-퍼플 그라데이션 */
+        .tutorial-btn {
+            background: linear-gradient(135deg, #ff6b9d, #f093fb);
+        }
+
+        .tutorial-btn:hover {
+            background: linear-gradient(135deg, #ff5a8d, #f083eb);
+            transform: translateY(-0.1em);
+            box-shadow: 0 0.3em 1.5em rgba(0, 0, 0, 0.2);
+        }
+
+        /* 실전 모드 버튼 - 블루-퍼플 그라데이션 */
+        .game-btn {
+            background: linear-gradient(135deg, #a8c8ff, #667eea);
+        }
+
+        .game-btn:hover {
+            background: linear-gradient(135deg, #98b8ef, #5e7dea);
+            transform: translateY(-0.1em);
+            box-shadow: 0 0.3em 1.5em rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-button:active {
+            transform: translateY(-0.05em);
+            box-shadow: 0 0.15em 0.8em rgba(0, 0, 0, 0.25);
+        }
+
+        /* 저작권 확인 버튼 */
+        .copyright-btn {
+            position: absolute;
+            bottom: 1em;
+            left: 1.5em;
+            padding: 0.5em 1em;
+            font-size: 0.8em;
+            font-weight: 500;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0.1em 0.5em rgba(0, 0, 0, 0.1);
+        }
+
+        .copyright-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-0.05em);
+            box-shadow: 0 0.15em 0.8em rgba(0, 0, 0, 0.15);
+        }
+
+        /* 저작권 모달 */
+        .copyright-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .copyright-content {
+            background: white;
+            border-radius: 1.5em;
+            padding: 2.5em;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 2em 4em rgba(0, 0, 0, 0.3);
+            position: relative;
+            font-size: calc(100vw / 80);
+        }
+
+        .copyright-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2em;
+            padding-bottom: 1em;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .copyright-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: #ff4757;
+            border: none;
+            border-radius: 50%;
+            width: 2.5em;
+            height: 2.5em;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: #ff3742;
+            transform: scale(1.1);
+        }
+
+        .copyright-section {
+            margin-bottom: 2em;
+        }
+
+        .copyright-section h3 {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 1em;
+            padding: 0.5em 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .copyright-item {
+            margin-bottom: 1.2em;
+            padding: 1em;
+            background: #f8f9fa;
+            border-radius: 0.8em;
+            border-left: 4px solid #667eea;
+        }
+
+        .copyright-item .item-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+            margin-bottom: 0.5em;
+        }
+
+        .copyright-item .item-source {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        .copyright-item .item-license {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 0.5em;
+            font-style: italic;
+        }
+
+        /* 세로가 더 긴 화면일 때 */
+        @media screen and (min-aspect-ratio: 16/9) {
+            .game-container {
+                width: 177.78vh; /* 16:9 비율 */
+                height: 100vh;
+                font-size: calc(100vh / 28); /* 세로 기준으로 폰트 크기 조정 */
+            }
+            
+            .copyright-content {
+                font-size: calc(100vh / 50);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="title">
+            두근두근<br>
+            개체군 키우기
+        </div>
+        
+        <div class="button-container">
+            <a href="tutorial.html" class="menu-button tutorial-btn">튜토리얼</a>
+            <a href="game.html" class="menu-button game-btn">실전 모드</a>
+        </div>
+
+        <!-- 저작권 확인 버튼 -->
+        <button class="copyright-btn" onclick="openCopyrightModal()">📋 저작권 확인</button>
+    </div>
+
+    <!-- 저작권 모달 -->
+    <div class="copyright-modal" id="copyrightModal">
+        <div class="copyright-content">
+            <div class="copyright-header">
+                <h2 class="copyright-title">📋 멀티미디어 자료 출처</h2>
+                <button class="close-btn" onclick="closeCopyrightModal()">×</button>
+            </div>
+
+            <!-- 이미지 자료 섹션 -->
+            <div class="copyright-section">
+                <h3>🖼️ 이미지 자료</h3>
+                
+                <div class="copyright-item">
+                    <div class="item-name">꿀벌(EASY) 선택형 이벤트 이미지</div>
+                    <div class="item-source">OpenAI(생성형 AI)를 활용해 자체 제작되었습니다.</div>
+                    <div class="item-license">OpenAI 이용 약관에 따라 콘텐츠 소유권은 제작자에게 있습니다.</div>
+                </div>
+
+                <div class="copyright-item">
+                    <div class="item-name">시작화면, 해달·말미잘·꿀벌·소나무 게임 배경화면, 해달·말미잘·꿀벌(HARD)·소나무 선택형 이벤트 이미지, 말벌 이미지</div>
+                    <div class="item-source">Google Gemini(생성형 AI)를 활용해 자체 제작되었습니다.</div>
+                    <div class="item-license">Google 서비스 약관에 따라 콘텐츠 소유권은 제작자에게 있습니다.</div>
+                </div>
+
+                <div class="copyright-item">
+                    <div class="item-name">그외 이미지</div>
+                    <div class="item-source">자체 제작되었습니다.</div>
+                </div>
+
+            </div>
+
+            <!-- 음향 자료 섹션 -->
+            <div class="copyright-section">
+                <h3>🎵 음향 자료</h3>
+                
+                <div class="copyright-item">
+                    <div class="item-name">긍정 효과음 (positive.mp3)</div>
+                    <div class="item-source">출처: https://pixabay.com/ko/sound-effects/level-up-06-370051/ </div>
+                    <div class="item-license">Pixabay 서비스 약관에 따라 해당 파일은 사용자에게 컨텐츠 라이선스가 부여됩니다.</div>
+                </div>
+
+                <div class="copyright-item">
+                    <div class="item-name">부정 효과음 (negative.mp3)</div>
+                    <div class="item-source">출처: https://pixabay.com/ko/sound-effects/negative-beeps-6008/ </div>
+                    <div class="item-license">Pixabay 서비스 약관에 따라 해당 파일은 사용자에게 컨텐츠 라이선스가 부여됩니다.</div>
+                </div>
+
+                <div class="copyright-item">
+                    <div class="item-name">성공 효과음 (success.mp3)</div>
+                    <div class="item-source">출처: https://pixabay.com/ko/sound-effects/applause-cheer-236786/ </div>
+                    <div class="item-license">Pixabay 서비스 약관에 따라 해당 파일은 사용자에게 컨텐츠 라이선스가 부여됩니다.</div>
+                </div>
+				
+				                <div class="copyright-item">
+                    <div class="item-name">실패 효과음 (failure.mp3)</div>
+                    <div class="item-source">출처: https://pixabay.com/ko/sound-effects/failure-1-89170/</div>
+                    <div class="item-license">Pixabay 서비스 약관에 따라 해당 파일은 사용자에게 컨텐츠 라이선스가 부여됩니다.</div>
+                </div>
+				
+				                <div class="copyright-item">
+                    <div class="item-name">꿀벌 길찾기 게임 배경음 (lost_bee_game.mp3)</div>
+                    <div class="item-source">출처: https://pixabay.com/ko/sound-effects/game-music-loop-6-144641/ </div>
+                    <div class="item-license">Pixabay 서비스 약관에 따라 해당 파일은 사용자에게 컨텐츠 라이선스가 부여됩니다.</div>
+                </div>
+
+                <div class="copyright-item">
+                    <div class="item-name">해달 범고래 피하기 게임 배경음 (whale_game.mp3)</div>
+                    <div class="item-source">출처: https://pixabay.com/ko/sound-effects/scary-horror-theme-song-382733/ </div>
+                    <div class="item-license">Pixabay 서비스 약관에 따라 해당 파일은 사용자에게 컨텐츠 라이선스가 부여됩니다.</div>
+                </div>
+            </div>
+			
+			
+
+            <!-- 폰트 및 기타 자료 섹션 -->
+            <div class="copyright-section">
+                <h3>🔤 폰트</h3>
+                
+                <div class="copyright-item">
+                    <div class="item-name">Arial 폰트</div>
+                    <div class="item-source">출처: Microsoft Corporation (시스템 기본 폰트)</div>
+                    <div class="item-license">시스템 폰트로, 사용 허가된 폰트입니다.</div>
+                </div>
+            </div>
+
+            <!-- 면책 조항 -->
+            <div class="copyright-section">
+                <h3>⚖️ 관련 조항</h3>
+                <div class="copyright-item">
+                    <div class="item-name">Google Gemini 생성 이미지에 대한 사용권</div>
+                    <div class="item-source">
+                        1. 출처: Google 서비스 약관(https://policies.google.com/terms?hl=ko)
+						<br><br>
+						2. 관련 조항 (발췌): 귀하는 일부 Google 서비스를 통해 오리지널 콘텐츠를 생성할 수 있습니다. Google은 해당 콘텐츠에 대해 소유권을 주장하지 않습니다.</div>
+                </div>
+                <div class="copyright-item">
+                    <div class="item-name">OpenAI 생성 이미지에 대한 사용권</div>
+                    <div class="item-source">
+                        1. 출처: OpenAI 이용 약관(https://openai.com/ko-KR/policies/row-terms-of-use/)
+						<br><br>
+						2. 관련 조항 (발췌): 콘텐츠 소유권. 관련 법률상 허용되는 한도 내에서, 귀하와 OpenAI 중 귀하가 (a) 인풋에 대한 귀하의 소유권을 유지하고 (b) 아웃풋을 소유합니다. 당사는 아웃풋에 대한 당사의 권리, 소유권 및 이권이 있다면 그 모두 이로써 귀하에게 양도합니다.</div>
+                </div>
+                <div class="copyright-item">
+                    <div class="item-name">Pixabay 오디오 파일에 대한 사용권</div>
+                    <div class="item-source">
+                        1. 출처: Pixabay 서비스 약관(https://pixabay.com/ko/service/terms/)
+						<br><br>
+						2. 관련 조항 (발췌 원문): Subject to the Prohibited Uses described below (which you agree and acknowledge you are not entitled to engage in), when you download any Content that is not CC0 Content from the Service, we grant you an irrevocable, worldwide, perpetual (or as long as allowed by law), non-exclusive and royalty-free right to download, use, copy, modify or adapt the Content for commercial or non-commercial purposes ('Content License'). The rights granted are non-exclusive, meaning that we may also grant other users the same rights in the same Content. For the avoidance of doubt, you do not obtain any rights in any other users’ Communications.
+						<br><br>
+						3. 관련 조항 (발췌 번역본): 아래에 설명된 금지된 사용(귀하는 이에 참여할 자격이 없음에 동의하고 인정함)에 따라, 귀하가 서비스에서 CC0 콘텐츠가 아닌 콘텐츠를 다운로드할 경우, 당사는 귀하에게 상업적 또는 비상업적 목적으로 콘텐츠를 다운로드, 사용, 복사, 수정 또는 수정할 수 있는 취소 불가능하고 전 세계적이며 영구적이고(또는 법률이 허용하는 한), 비독점적이며 로열티 없는 권리( '콘텐츠 라이선스' )를 부여합니다. 부여된 권리는 비독점적이며, 이는 당사가 다른 사용자에게도 동일한 콘텐츠에 대한 동일한 권리를 부여할 수 있음을 의미합니다. 의심의 여지를 없애기 위해, 귀하는 다른 사용자의 커뮤니케이션에 대한 어떠한 권리도 획득하지 않습니다.
+						<br><br>
+						4. 본 소프트웨어에 이용된 Pixabay 오디오 파일은 모두 2019년 1월 9일 이후에 게시된 파일로 CC0 콘텐츠에 해당하지 않으며, 오디오 파일을 텍스트, 일러스트레이션, 코드 등 다른 요소와 조합하여 새로운 창작물을 만드는 데 사용한 것으로, 서비스 약관의 “금지된 사용”에 해당하지 않음을 확인하였습니다.</div>
+                </div>					
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openCopyrightModal() {
+            document.getElementById('copyrightModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCopyrightModal() {
+            document.getElementById('copyrightModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCopyrightModal();
+            }
+        });
+
+        // 모달 배경 클릭 시 닫기
+        document.getElementById('copyrightModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeCopyrightModal();
+            }
+        });
+    </script>
+</body>
+</html>

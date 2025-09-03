@@ -1,0 +1,2259 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>말미잘 Easy - 두근두근 개체군 키우기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #2563eb 0%, #06b6d4 50%, #3b82f6 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.03) 0px,
+                rgba(255, 255, 255, 0.03) 2px,
+                transparent 2px,
+                transparent 12px
+            );
+            pointer-events: none;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 56.25vw;
+            max-width: 1280px;
+            max-height: 720px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 2em;
+            box-shadow: 
+                0 0 0 3px rgba(255, 255, 255, 0.2),
+                0 1.5em 4em rgba(0, 0, 0, 0.2),
+                inset 0 0.06em 0 rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(0.6em);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: calc(1vw + 0.5vh);
+        }
+
+        @media (min-width: 1280px) {
+            .game-container {
+                font-size: 16px;
+            }
+        }
+
+        @media screen and (min-aspect-ratio: 16/9) {
+            .game-container {
+                width: 177.78vh;
+                height: 100vh;
+            }
+        }
+
+        .status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1em 2em;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            backdrop-filter: blur(0.3em);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 2.5em;
+            height: 2.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            box-shadow: 0 0.25em 0.75em rgba(0, 0, 0, 0.1);
+        }
+
+        .back-btn:hover {
+            background: white;
+            transform: translateY(-0.06em);
+            box-shadow: 0 0.37em 1em rgba(0, 0, 0, 0.15);
+        }
+
+        .status-info {
+            display: flex;
+            gap: 1em;
+            align-items: center;
+        }
+
+        .status-display {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5em 1em;
+            border-radius: 1em;
+            font-weight: 700;
+            color: #2D3748;
+            font-size: 0.9em;
+            box-shadow: 0 0.25em 0.75em rgba(0, 0, 0, 0.1);
+        }
+
+        .graph-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border: none;
+            border-radius: 0.8em;
+            padding: 0.5em 1em;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8em;
+            box-shadow: 0 0.25em 0.75em rgba(72, 187, 120, 0.3);
+        }
+
+        .graph-btn:hover:not(:disabled) {
+            transform: translateY(-0.06em);
+            box-shadow: 0 0.37em 1em rgba(72, 187, 120, 0.4);
+        }
+
+        .graph-btn:disabled {
+            background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .character-area {
+            position: absolute;
+            top: 4em;
+            bottom: 4em;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1em 2em;
+			
+			background-image: url('images/anemone_background.png');
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
+        }
+
+        .character {
+            width: 18em;
+            height: 18em;
+            background-image: url('images/anemone_main.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            animation: sway 3s ease-in-out infinite;
+            filter: drop-shadow(0 0.4em 1em rgba(0, 0, 0, 0.15));
+            transition: background-image 0.5s ease;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: translateX(0) rotate(-1deg); }
+            50% { transform: translateX(0.5em) rotate(1deg); }
+        }
+
+        .dialogue-container {
+            position: absolute;
+            bottom: 2em;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 1.5em 1.5em 1.5em 1.5em;
+            padding: 1.5em;
+            box-shadow: 
+                0 -0.4em 1.2em rgba(0, 0, 0, 0.1),
+                inset 0 0.06em 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .dialogue-text {
+            font-size: 1em;
+            line-height: 1.5;
+            color: #2D3748;
+            margin-bottom: 1em;
+            min-height: 3.5em;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .dialogue-text.success {
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .dialogue-actions {
+            display: flex;
+            gap: 0.8em;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            width: 2.5em;
+            height: 2.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 0.3em 0.8em rgba(102, 126, 234, 0.3),
+                inset 0 0.06em 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .next-btn:hover:not(:disabled) {
+            transform: translateY(-0.12em) scale(1.05);
+            box-shadow: 
+                0 0.75em 1.5em rgba(102, 126, 234, 0.4),
+                inset 0 0.06em 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .next-btn:disabled {
+            cursor: not-allowed;
+            background: #ccc;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border: none;
+            border-radius: 1.2em;
+            padding: 0.8em 1.5em;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            box-shadow: 0 0.37em 0.9em rgba(72, 187, 120, 0.3);
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-0.06em);
+            box-shadow: 0 0.5em 1.2em rgba(72, 187, 120, 0.4);
+        }
+
+        .action-btn:disabled {
+            background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+            box-shadow: 0 0.37em 0.9em rgba(159, 122, 234, 0.3);
+        }
+
+        .action-btn.secondary:hover:not(:disabled) {
+            box-shadow: 0 0.5em 1.2em rgba(159, 122, 234, 0.4);
+        }
+
+        .action-btn.danger {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            box-shadow: 0 0.37em 0.9em rgba(229, 62, 62, 0.3);
+        }
+
+        .action-btn.danger:hover:not(:disabled) {
+            box-shadow: 0 0.5em 1.2em rgba(229, 62, 62, 0.4);
+        }
+
+        /* 입력창 스타일 */
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            margin: 1em 0;
+        }
+
+        .input-field {
+            padding: 0.5em;
+            border: 2px solid #cbd5e0;
+            border-radius: 0.5em;
+            font-size: 1em;
+            width: 6em;
+            text-align: center;
+        }
+
+        .confirm-btn {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            border: none;
+            border-radius: 0.8em;
+            padding: 0.5em 1em;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .confirm-btn:hover {
+            transform: translateY(-0.06em);
+        }
+
+        /* 이벤트 모달 */
+        .event-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 2em;
+        }
+
+        .event-content {
+            background: white;
+            padding: 2em;
+            border-radius: 1.5em;
+            box-shadow: 0 1.2em 2.4em rgba(0, 0, 0, 0.3);
+            position: relative;
+            width: 90%;
+            max-width: 35em;
+            max-height: 80%;
+        }
+
+        /* 선택형 이벤트 모달 스타일 */
+        .choice-event-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 2em;
+        }
+
+        .choice-event-content {
+            background: white;
+            border-radius: 1.5em;
+            box-shadow: 0 1.2em 2.4em rgba(0, 0, 0, 0.3);
+            position: relative;
+            width: 90%;
+            max-width: 50em;
+            height: 80%;
+            max-height: 35em;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .choice-event-image {
+            flex: 1;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 1.5em 0 0 1.5em;
+        }
+
+        .choice-event-right {
+            flex: 1;
+            padding: 2em;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .choice-event-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #2D3748;
+            margin-bottom: 1.5em;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .choice-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .choice-buttons.show {
+            opacity: 1;
+        }
+
+        .choice-btn {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            border: none;
+            border-radius: 1em;
+            padding: 1em 1.5em;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            text-align: left;
+        }
+
+        .choice-btn:hover {
+            transform: translateY(-0.06em);
+            box-shadow: 0 0.5em 1.2em rgba(66, 153, 225, 0.4);
+        }
+
+        .choice-btn:nth-child(2) {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .choice-btn:nth-child(2):hover {
+            box-shadow: 0 0.5em 1.2em rgba(72, 187, 120, 0.4);
+        }
+
+        .event-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #2D3748;
+            margin-bottom: 1.5em;
+            min-height: 4em;
+        }
+
+        .event-text.positive {
+            color: #2563eb;
+        }
+
+        .event-text.negative {
+            color: #dc2626;
+        }
+
+        .event-next-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            border-radius: 50%;
+            width: 3em;
+            height: 3em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            margin: 0 auto;
+        }
+
+        .event-next-btn:hover {
+            transform: scale(1.1);
+        }
+
+       /* 미니게임 영역 */
+        .minigame-area {
+            position: relative;
+            width: calc(100% - 2em);
+            max-width: calc(100% - 2em);
+            height: 18em;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            border-radius: 1.2em;
+            margin: 0.5em 1em;
+            margin-top: -50px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0.8em 1em 0em 1em;
+            box-shadow: 
+                0 0.5em 1em rgba(0, 0, 0, 0.3),
+                inset 0 0.2em 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .slot-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5em;
+            width: 100%;
+            max-width: 50em;
+        }
+
+        .slot-row:last-child {
+            margin-bottom: 2em;
+        }
+
+        .slot-container-horizontal {
+            display: flex;
+            gap: 1em;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .slot-item {
+            position: relative;
+            width: 12em;
+            height: 8em;
+            border: 3px solid #60a5fa;
+            border-radius: 1em;
+            background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 1em 2em rgba(96, 165, 250, 0.2),
+                inset 0 0.1em 0 rgba(255, 255, 255, 0.8),
+                inset 0 -0.1em 0 rgba(0, 0, 0, 0.1);
+            transform-style: preserve-3d;
+        }
+
+        .slot-item:hover {
+            transform: translateY(-0.2em);
+            box-shadow: 
+                0 1.5em 3em rgba(96, 165, 250, 0.3),
+                inset 0 0.1em 0 rgba(255, 255, 255, 0.9),
+                inset 0 -0.1em 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .slot-item.spinning {
+            border-color: #f59e0b;
+            box-shadow: 
+                0 1em 2em rgba(245, 158, 11, 0.3),
+                inset 0 0.1em 0 rgba(255, 255, 255, 0.8),
+                inset 0 -0.1em 0 rgba(0, 0, 0, 0.1),
+                0 0 2em rgba(245, 158, 11, 0.4);
+            animation: slotGlow 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes slotGlow {
+            from { 
+                box-shadow: 
+                    0 1em 2em rgba(245, 158, 11, 0.3),
+                    inset 0 0.1em 0 rgba(255, 255, 255, 0.8),
+                    inset 0 -0.1em 0 rgba(0, 0, 0, 0.1),
+                    0 0 2em rgba(245, 158, 11, 0.4);
+            }
+            to { 
+                box-shadow: 
+                    0 1em 2em rgba(245, 158, 11, 0.5),
+                    inset 0 0.1em 0 rgba(255, 255, 255, 0.9),
+                    inset 0 -0.1em 0 rgba(0, 0, 0, 0.1),
+                    0 0 3em rgba(245, 158, 11, 0.6);
+            }
+        }
+
+        .slot-image {
+            width: 90%;
+            height: 90%;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: all 0.1s ease;
+            filter: drop-shadow(0 0.2em 0.5em rgba(0, 0, 0, 0.2));
+        }
+
+        .slot-arrow {
+            position: absolute;
+            top: -2.5em;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5em;
+            color: #f59e0b;
+            text-shadow: 
+                0 0.1em 0.2em rgba(0, 0, 0, 0.3),
+                0 0 1em rgba(245, 158, 11, 0.6);
+            animation: arrowBounce 0.8s ease-in-out infinite;
+        }
+
+        @keyframes arrowBounce {
+            0%, 100% { 
+                transform: translateX(-50%) translateY(0) scale(1);
+                text-shadow: 
+                    0 0.1em 0.2em rgba(0, 0, 0, 0.3),
+                    0 0 1em rgba(245, 158, 11, 0.6);
+            }
+            50% { 
+                transform: translateX(-50%) translateY(-0.3em) scale(1.1);
+                text-shadow: 
+                    0 0.2em 0.4em rgba(0, 0, 0, 0.4),
+                    0 0 1.5em rgba(245, 158, 11, 0.8);
+            }
+        }
+
+        .slot-label {
+            color: #f8fafc;
+            font-size: 1.2em;
+            font-weight: 700;
+            text-shadow: 0 0.1em 0.2em rgba(0, 0, 0, 0.5);
+            min-width: 6em;
+            text-align: center;
+            padding: 0 1em;
+        }
+
+        .slot-controls {
+            display: flex;
+            gap: 1.5em;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .stop-btn {
+            background: linear-gradient(145deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+            border: none;
+            border-radius: 1.2em;
+            padding: 1em 2.5em;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 0.8em 1.5em rgba(220, 38, 38, 0.4),
+                inset 0 0.1em 0 rgba(255, 255, 255, 0.2),
+                inset 0 -0.1em 0 rgba(0, 0, 0, 0.2);
+            text-shadow: 0 0.1em 0.2em rgba(0, 0, 0, 0.3);
+            transform-style: preserve-3d;
+            position: relative;
+        }
+
+        .stop-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(145deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+            border-radius: 1.2em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stop-btn:hover:not(:disabled) {
+            transform: translateY(-0.3em) scale(1.05);
+            box-shadow: 
+                0 1.2em 2.5em rgba(220, 38, 38, 0.5),
+                inset 0 0.1em 0 rgba(255, 255, 255, 0.3),
+                inset 0 -0.1em 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .stop-btn:hover:not(:disabled)::before {
+            opacity: 1;
+        }
+
+        .stop-btn:active:not(:disabled) {
+            transform: translateY(-0.1em) scale(1.02);
+            box-shadow: 
+                0 0.5em 1em rgba(220, 38, 38, 0.6),
+                inset 0 0.1em 0 rgba(255, 255, 255, 0.4),
+                inset 0 -0.1em 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .stop-btn:disabled {
+            background: linear-gradient(145deg, #6b7280 0%, #4b5563 50%, #374151 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: 
+                0 0.3em 0.8em rgba(107, 114, 128, 0.3),
+                inset 0 0.1em 0 rgba(255, 255, 255, 0.1),
+                inset 0 -0.1em 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .stop-btn:disabled::before {
+            opacity: 0;
+        }
+
+        .minigame-title {
+            color: #f8fafc;
+            font-size: 1.5em;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 2em;
+            text-shadow: 
+                0 0.1em 0.2em rgba(0, 0, 0, 0.5),
+                0 0 1em rgba(96, 165, 250, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        /* 그래프 모달 */
+        .graph-modal, .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 2em;
+        }
+
+        .history-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 2em;
+        }
+
+        .graph-content, .loading-content {
+            background: white;
+            padding: 2em;
+            border-radius: 1.5em;
+            box-shadow: 0 1.2em 2.4em rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .graph-content { 
+            width: 90%; 
+            max-width: 35em; 
+            max-height: 80%;
+        }
+        
+        .loading-content { 
+            text-align: center; 
+            font-size: 2em; 
+            font-weight: 700; 
+            color: #2D3748; 
+            padding: 2em;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1.5em;
+            box-shadow: 0 1.2em 2.4em rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+        }
+
+        .graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5em;
+        }
+
+        .graph-title { 
+            font-size: 1.3em; 
+            font-weight: 700; 
+            color: #2D3748; 
+        }
+
+        .close-btn {
+            background: #e53e3e; 
+            border: none; 
+            border-radius: 50%; 
+            width: 2em; 
+            height: 2em;
+            color: white; 
+            cursor: pointer; 
+            font-size: 1.2em; 
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover { 
+            background: #c53030; 
+            transform: scale(1.1); 
+        }
+
+        .history-content {
+            max-height: 300px; 
+            overflow-y: auto; 
+            padding: 1em; 
+            background: #f7fafc; 
+            border-radius: 0.5em; 
+            font-family: monospace; 
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .typing-cursor { 
+            animation: blink 1s infinite; 
+        }
+        
+        @keyframes blink { 
+            0%, 50% { opacity: 1; } 
+            51%, 100% { opacity: 0; } 
+        }
+
+        /* 게임 결과 애니메이션 */
+        .result-animation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4em;
+            font-weight: 900;
+            text-align: center;
+            z-index: 100;
+            animation: resultPop 2s ease-out;
+            pointer-events: none;
+        }
+
+        .result-animation.success {
+            color: #22c55e;
+            text-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+        }
+
+        .result-animation.failure {
+            color: #ef4444;
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        @keyframes resultPop {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2) rotate(0deg);
+                opacity: 1;
+            }
+            80% {
+                transform: translate(-50%, -50%) scale(1.1) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 0;
+            }
+        }
+
+        /* 결과 이미지 */
+        .result-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20em;
+            height: 20em;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 99;
+            animation: resultImagePop 3s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes resultImagePop {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 1;
+            }
+            80% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="status-bar">
+            <button class="back-btn" id="backBtn">←</button>
+            <div class="status-info" id="statusInfo">
+                <div class="status-display" id="yearDisplay">0년차</div>
+                <div class="status-display" id="populationDisplay">개체수: 50마리</div>
+                <div class="status-display" id="foodDisplay">플랑크톤: -마리</div>
+                <div class="status-display" id="tempDisplay">수온: -°C</div>
+                <button class="graph-btn" id="graphBtn" disabled>개체수 그래프</button>
+            </div>
+        </div>
+
+        <div class="character-area" id="characterArea">
+            <div class="character" id="character"></div>
+        </div>
+
+        <div class="dialogue-container" id="dialogueContainer">
+            <div class="dialogue-text" id="dialogueText"></div>
+            <div class="dialogue-actions" id="dialogueActions">
+                <button class="next-btn" id="nextBtn">🔽</button>
+            </div>
+        </div>
+
+        <!-- 기존 이벤트 모달 (알림형) -->
+        <div class="event-modal" id="eventModal">
+            <div class="event-content">
+                <div class="event-text" id="eventText"></div>
+                <div id="eventActions">
+                    <button class="event-next-btn" id="eventNextBtn">▼</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 새로운 선택형 이벤트 모달 -->
+        <div class="choice-event-modal" id="choiceEventModal">
+            <div class="choice-event-content">
+                <div class="choice-event-image" id="choiceEventImage"></div>
+                <div class="choice-event-right">
+                    <div class="choice-event-text" id="choiceEventText"></div>
+                    <div class="choice-buttons" id="choiceButtons">
+                        <button class="choice-btn" id="choice1Btn"></button>
+                        <button class="choice-btn" id="choice2Btn"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 그래프 모달 -->
+        <div class="graph-modal" id="graphModal">
+             <div class="graph-content">
+                <div class="graph-header">
+                    <div class="graph-title">개체수 변화 그래프</div>
+                    <button class="close-btn" id="closeGraphBtn">×</button>
+                </div>
+                <canvas class="graph-canvas" id="graphCanvas" style="width: 100%; height: 20em; border: 1px solid #e2e8f0; border-radius: 0.5em;"></canvas>
+            </div>
+        </div>
+
+        <!-- 히스토리 모달 -->
+        <div class="history-modal" id="historyModal">
+             <div class="graph-content">
+                <div class="graph-header">
+                    <div class="graph-title">히스토리</div>
+                    <button class="close-btn" id="closeHistoryBtn">×</button>
+                </div>
+                <div class="history-content" id="historyContent"></div>
+            </div>
+        </div>
+
+        <!-- 로딩 모달 -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-content" id="loadingText">시간이 흐르고 있어...</div>
+        </div>
+    </div>
+
+    <script>
+        // 게임 상태
+        let gameState = {
+            currentYear: 0,
+            population: 50,
+            food: 0, // 플랑크톤 개체수
+            temperature: 0, // 수온
+            stress: 0, // 온도 스트레스 지수
+            populationHistory: [50],
+            foodHistory: [],
+            temperatureHistory: [],
+            historyEvents: [],
+            dialogueStep: 0,
+            isTyping: false,
+            gameEnded: false,
+            dialogueComplete: false,
+            hermitCrabPartner: false, // 소라게 짝꿍 여부
+            clownfishPartner: false // 흰동가리 공생 여부
+        };
+
+        // DOM 요소들
+        const dialogueTextEl = document.getElementById('dialogueText');
+        const dialogueActionsEl = document.getElementById('dialogueActions');
+        const characterEl = document.getElementById('character');
+        const yearDisplayEl = document.getElementById('yearDisplay');
+        const populationDisplayEl = document.getElementById('populationDisplay');
+        const foodDisplayEl = document.getElementById('foodDisplay');
+        const tempDisplayEl = document.getElementById('tempDisplay');
+        const graphBtnEl = document.getElementById('graphBtn');
+        const backBtnEl = document.getElementById('backBtn');
+        const eventModalEl = document.getElementById('eventModal');
+        const eventTextEl = document.getElementById('eventText');
+        const eventActionsEl = document.getElementById('eventActions');
+        const choiceEventModalEl = document.getElementById('choiceEventModal');
+        const choiceEventImageEl = document.getElementById('choiceEventImage');
+        const choiceEventTextEl = document.getElementById('choiceEventText');
+        const choiceButtonsEl = document.getElementById('choiceButtons');
+        const graphModalEl = document.getElementById('graphModal');
+        const historyModalEl = document.getElementById('historyModal');
+        const loadingOverlayEl = document.getElementById('loadingOverlay');
+        const historyContentEl = document.getElementById('historyContent');
+
+        // 초기 대사
+        const initialDialogues = [
+            "흐물흐물. 나는 귀여운 말미잘이야.",
+            "여기는… 온갖 혹독한 시련이 찾아오는 현실이지…",
+            "우리 말미잘 개체군은 지금 50마리가 있어.",
+            "우리 말미잘은 플랑크톤을 먹고 살지. 지금 바닷속 플랑크톤은 얼마나 많이 있을까?"
+        ];
+
+        // 효과음 함수
+        const audioFiles = {
+            positive: new Audio('audio/positive.mp3'),
+            negative: new Audio('audio/negative.mp3'),
+            success: new Audio('audio/success.mp3'),
+            failure: new Audio('audio/failure.mp3')
+        };
+
+        // 모든 오디오 파일 미리 로드
+        Object.values(audioFiles).forEach(audio => {
+            audio.preload = 'auto';
+        });
+
+        // 효과음 재생 함수들
+        function playPositiveSound() {
+            audioFiles.positive.currentTime = 0;
+            audioFiles.positive.play().catch(e => console.log('긍정 효과음 재생 오류:', e));
+        }
+
+        function playNegativeSound() {
+            audioFiles.negative.currentTime = 0;
+            audioFiles.negative.play().catch(e => console.log('부정 효과음 재생 오류:', e));
+        }
+
+        function playSuccessSound() {
+            audioFiles.success.currentTime = 0;
+            audioFiles.success.play().catch(e => console.log('성공 효과음 재생 오류:', e));
+        }
+
+        function playFailureSound() {
+            audioFiles.failure.currentTime = 0;
+            audioFiles.failure.play().catch(e => console.log('실패 효과음 재생 오류:', e));
+        }
+
+        // 타이핑 애니메이션
+        function typeText(element, text, callback, className = '') {
+            if (gameState.isTyping) return;
+            
+            gameState.isTyping = true;
+            if (className) {
+                element.className = className;
+            }
+            element.innerHTML = '';
+            let i = 0;
+            const cursor = '<span class="typing-cursor">|</span>';
+            
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML = text.substring(0, i + 1) + cursor;
+                    i++;
+                    setTimeout(type, 50);
+                } else {
+                    element.innerHTML = text;
+                    gameState.isTyping = false;
+                    if (callback) callback();
+                }
+            }
+            type();
+        }
+
+        // 대사 진행
+        function nextDialogue() {
+            if (gameState.isTyping) return;
+            
+            if (gameState.dialogueStep < initialDialogues.length) {
+                typeText(dialogueTextEl, initialDialogues[gameState.dialogueStep], () => {
+                    // 마지막 대사("우리 말미잘은 플랑크톤을 먹고 살지...") 후 플랑크톤 입력창 표시
+                    if (gameState.dialogueStep === initialDialogues.length) {
+                        showFoodInput();
+                    }
+                });
+                gameState.dialogueStep++;
+            } else if (gameState.dialogueStep === initialDialogues.length) {
+                // 플랑크톤 개체수 설정 후
+                const afterFoodText = `지금 플랑크톤은 ${gameState.food}마리 있구나!`;
+                typeText(dialogueTextEl, afterFoodText, () => {
+                    gameState.dialogueStep++;
+                });
+            } else if (gameState.dialogueStep === initialDialogues.length + 1) {
+                typeText(dialogueTextEl, "올해 우리 바다 생태계의 평균 수온은 얼마였을까?", () => {
+                    showTemperatureInput();
+                });
+            } else if (gameState.dialogueStep === initialDialogues.length + 2) {
+                typeText(dialogueTextEl, "어떤 어려움이 찾아올지 모르겠지만, 내 말미잘생의 목표는!", () => {
+                    gameState.dialogueStep++;
+                });
+            } else if (gameState.dialogueStep === initialDialogues.length + 3) {
+                typeText(dialogueTextEl, "우리 말미잘 개체군이 안정적으로 잘 유지되는 거야. 그럴 수 있도록 도와줘! 잘 부탁해!", () => {
+                    gameState.dialogueComplete = true;
+                    showGameActions();
+                    enableButtons();
+                });
+            }
+        }
+
+        // 플랑크톤 개체수 입력창 표시
+        function showFoodInput() {
+            dialogueActionsEl.innerHTML = `
+                <div class="input-container">
+                    <span>플랑크톤 개체수:</span>
+                    <input type="number" id="foodInput" class="input-field" min="5" max="500" placeholder="5-500">
+                    <button class="confirm-btn" onclick="setFoodCount()">확인</button>
+                </div>
+            `;
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                nextBtn.style.display = 'none';
+            }
+        }
+
+        // 수온 입력창 표시
+        function showTemperatureInput() {
+            dialogueActionsEl.innerHTML = `
+                <div class="input-container">
+                    <span>수온:</span>
+                    <input type="number" id="tempInput" class="input-field" min="15" max="45" placeholder="15-45°C">
+                    <button class="confirm-btn" onclick="setTemperature()">확인</button>
+                </div>
+            `;
+        }
+
+        // 플랑크톤 개체수 설정
+        function setFoodCount() {
+            const foodInput = document.getElementById('foodInput');
+            const value = parseInt(foodInput.value);
+            
+            if (isNaN(value) || value < 5 || value > 500) {
+                alert('5~500 범위 내에서 설정해주세요!');
+                return;
+            }
+            
+            gameState.food = value;
+            gameState.foodHistory = [value];
+            updateDisplay();
+            
+            dialogueActionsEl.innerHTML = `<button class="next-btn" id="nextBtn">🔽</button>`;
+            document.getElementById('nextBtn').addEventListener('click', nextDialogue);
+            nextDialogue();
+        }
+
+        // 수온 설정 (0년차 초기 설정)
+        function setTemperature() {
+            const tempInput = document.getElementById('tempInput');
+            const value = parseInt(tempInput.value);
+            
+            if (isNaN(value) || value < 15 || value > 45) {
+                alert('15~45°C 범위 내에서 설정해주세요!');
+                return;
+            }
+            
+            gameState.temperature = value;
+            gameState.temperatureHistory = [value];
+            updateDisplay();
+            
+            // 0년차 온도가 1년차에 미칠 영향을 히스토리에 미리 등록
+            calculateTemperatureStressForNextYear();
+            
+            // 다음 대화로 진행
+            gameState.dialogueStep++;
+            
+            dialogueActionsEl.innerHTML = `<button class="next-btn" id="nextBtn">🔽</button>`;
+            document.getElementById('nextBtn').addEventListener('click', nextDialogue);
+            nextDialogue();
+        }
+
+        // 게임 액션 버튼 표시
+        function showGameActions() {
+            if (gameState.currentYear >= 1) {
+                // 1년차부터는 히스토리 버튼도 함께 표시
+                dialogueActionsEl.innerHTML = `
+                    <button class="action-btn" id="nextYearBtn">1년 후~</button>
+                    <button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>
+                `;
+            } else {
+                // 0년차에는 히스토리 버튼 없음
+                dialogueActionsEl.innerHTML = `
+                    <button class="action-btn" id="nextYearBtn">1년 후~</button>
+                `;
+            }
+            document.getElementById('nextYearBtn').addEventListener('click', nextYear);
+            if (gameState.currentYear >= 1) {
+                document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+            }
+        }
+
+        // 1년 진행
+        function nextYear() {
+            if (!gameState.dialogueComplete || gameState.gameEnded) return;
+            
+            showLoading();
+            setTimeout(() => {
+                // 연차 증가는 여기서만 발생
+                gameState.currentYear++;
+                
+                // 이전 연차의 온도로 인한 스트레스 적용 (실제 스트레스 값 업데이트)
+                if (gameState.temperatureHistory[gameState.currentYear - 1] !== undefined) {
+                    calculateTemperatureStress(gameState.temperatureHistory[gameState.currentYear - 1]);
+                }
+                
+                // 특별 이벤트 체크
+                if (gameState.currentYear === 2) {
+                    // 2년차 소라게 찾기 이벤트
+                    hideLoading();
+                    showHermitCrabEvent();
+                    return;
+                } else if (gameState.currentYear === 4) {
+                    // 4년차 흰동가리 공생 이벤트
+                    hideLoading();
+                    showClownfishEvent();
+                    return;
+                } else if (gameState.currentYear === 6) {
+                    // 6년차 소라게 배신 이벤트
+                    hideLoading();
+                    showHermitCrabBetrayalEvent();
+                    return;
+                }
+                
+                // 기본 생태계 시뮬레이션
+                simulateEcosystem();
+                
+                // 히스토리 업데이트 (연차가 바뀐 후)
+                gameState.populationHistory.push(gameState.population);
+                gameState.foodHistory.push(gameState.food);
+                
+                // 게임 종료 조건 확인 (10년차에서 끝)
+                if (gameState.population <= 5) {
+                    showExtinctionEnding();
+                } else if (gameState.currentYear >= 10) {
+                    showSuccessEnding();
+                } else {
+                    showYearlyDialogue();
+                }
+                
+                updateDisplay();
+                hideLoading();
+            }, 1500);
+        }
+
+        // 온도 스트레스 계산 및 적용 (연차 진행 시 - 이전 연차 온도의 영향)
+        function calculateTemperatureStress(temperature) {
+            const T = temperature;
+            let stressChange = 0;
+            
+            // 고온 스트레스
+            const excess_hot = Math.max(0, T - 28);
+            stressChange += 1 * excess_hot;
+            if (T >= 31) {
+                stressChange += 1 * (T - 31);
+            }
+            
+            // 저온 스트레스
+            const excess_cold = Math.max(0, 18 - T);
+            stressChange += 0.5 * excess_cold;
+            
+            // 스트레스 적용
+            gameState.stress += stressChange;
+            
+            // 회복
+            if (T < 28) {
+                gameState.stress = Math.max(0, gameState.stress - 5);
+            }
+            
+            // 스트레스에 따른 개체수 변화만 처리 (히스토리는 이미 이전에 추가됨)
+            if (gameState.stress >= 12) {
+                gameState.population *= 0.4; // 60% 감소
+            } else if (gameState.stress >= 8) {
+                gameState.population *= 0.6; // 40% 감소
+            } else if (gameState.stress >= 4) {
+                gameState.population *= 0.8; // 20% 감소
+            }
+        }
+
+        // 로트카-볼테라 방정식을 이용한 생태계 시뮬레이션
+        function simulateEcosystem() {
+            const prevPopulation = gameState.population;
+            const prevFood = gameState.food;
+            
+            // 로트카-볼테라 방정식 매개변수
+            const alpha = 0.3;     // 플랑크톤 성장률
+            const beta = 0.001;    // 플랑크톤-말미잘 상호작용 계수
+            const gamma = 0.2;     // 말미잘 자연 사망률
+            const delta = 0.0008;  // 말미잘-플랑크톤 상호작용 계수
+            
+            // 현재 개체수
+            let P = gameState.food;       // 플랑크톤 개체수 (먹이)
+            let A = gameState.population; // 말미잘 개체수 (포식자)
+            
+            // 로트카-볼테라 방정식 적용 (차분방정식으로 근사)
+            const dt = 0.1; // 0.1년 단위
+            for (let step = 0; step < 10; step++) {
+                const dP_dt = alpha * P - beta * P * A;
+                const dA_dt = delta * P * A - gamma * A;
+                P += dP_dt * dt;
+                A += dA_dt * dt;
+            }
+            
+            let newFood = P;
+            let newPopulation = A;
+            
+            // 경계 조건 (0 이하로는 가지 않도록)
+            newFood = Math.max(0, newFood);
+            newPopulation = Math.max(0, newPopulation);
+            
+            // 상태 업데이트
+            gameState.food = newFood;
+            gameState.population = newPopulation;
+            
+            // 온도 스트레스는 별도로 적용하지 않음 (연차별 수온 설정 시에만)
+        }
+
+        // 연차별 대사 표시
+        function showYearlyDialogue(includeTemperature = false) {
+            const currentPop = Math.floor(gameState.population);
+            const prevPop = Math.floor(gameState.populationHistory[gameState.currentYear - 1] || currentPop);
+            
+            let dialogue = `지금은 ${gameState.currentYear}년차고, 우리 말미잘 개체군은 ${currentPop}마리가 되었어.`;
+            
+            // 온도 스트레스 관련 대사 (조건부) - 작년 온도 확인
+            const lastYearTemp = gameState.temperatureHistory[gameState.currentYear - 1] || 25;
+            const excess_hot = Math.max(0, lastYearTemp - 28);
+            const excess_cold = Math.max(0, 18 - lastYearTemp);
+            
+            dialogueActionsEl.innerHTML = '';
+            
+            typeText(dialogueTextEl, dialogue, () => {
+                if (excess_hot > 0 || excess_cold > 0) {
+                    // 온도 스트레스 대사가 있으면 ▼ 버튼으로 수동 진행
+                    if (gameState.currentYear >= 1) {
+                        dialogueActionsEl.innerHTML = `
+                            <button class="next-btn" onclick="showTemperatureStressDialogue()">▼</button>
+                            <button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>
+                        `;
+                        document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+                    } else {
+                        dialogueActionsEl.innerHTML = `<button class="next-btn" onclick="showTemperatureStressDialogue()">▼</button>`;
+                    }
+                } else {
+                    // 온도 스트레스 대사가 없으면 ▼ 버튼으로 개체수 대사 진행
+                    if (gameState.currentYear >= 1) {
+                        dialogueActionsEl.innerHTML = `
+                            <button class="next-btn" onclick="continueToPopulationDialogue()">▼</button>
+                            <button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>
+                        `;
+                        document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+                    } else {
+                        dialogueActionsEl.innerHTML = `<button class="next-btn" onclick="continueToPopulationDialogue()">▼</button>`;
+                    }
+                }
+            });
+            
+            // 온도 스트레스 대사 표시 함수
+            window.showTemperatureStressDialogue = () => {
+                typeText(dialogueTextEl, "작년에는 수온 때문에 살기 좀 힘들었어… ㅠㅠ 백화현상을 겪은 친구들이 많아.", () => {
+                    characterEl.style.backgroundImage = "url('images/anemone_white.png')";
+                    if (gameState.currentYear >= 1) {
+                        dialogueActionsEl.innerHTML = `
+                            <button class="next-btn" onclick="continueToPopulationDialogue()">▼</button>
+                            <button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>
+                        `;
+                        document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+                    } else {
+                        dialogueActionsEl.innerHTML = `<button class="next-btn" onclick="continueToPopulationDialogue()">▼</button>`;
+                    }
+                });
+            };
+            
+            // 개체수 변화 대사를 위한 전역 함수
+            window.continueToPopulationDialogue = () => {
+                let populationDialogue = "";
+                if (currentPop >= prevPop) {
+                    populationDialogue = "다행히 아직 우리 말미잘 개체군은 잘 살아있어. 앞으로도 잘 부탁해.";
+                    if (excess_hot === 0 && excess_cold === 0) {
+                        characterEl.style.backgroundImage = "url('images/anemone_happy.png')";
+                    }
+                } else {
+                    populationDialogue = "나는 아직 살아있지만.. 친구와 가족들을 조금 잃었어. 🥺";
+                    if (excess_hot === 0 && excess_cold === 0) {
+                        characterEl.style.backgroundImage = "url('images/anemone_sad.png')";
+                    }
+                }
+                
+                typeText(dialogueTextEl, populationDialogue, () => {
+                    if (gameState.currentYear >= 1) {
+                        dialogueActionsEl.innerHTML = `
+                            <button class="next-btn" onclick="showTemperatureInput()">▼</button>
+                            <button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>
+                        `;
+                        document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+                    } else {
+                        dialogueActionsEl.innerHTML = `<button class="next-btn" onclick="showTemperatureInput()">▼</button>`;
+                    }
+                });
+            };
+            
+            // 수온 입력 표시 함수
+            window.showTemperatureInput = () => {
+                typeText(dialogueTextEl, "올해 우리 바다 생태계의 평균 수온은 얼마였을까?", () => {
+                    showYearlyTemperatureInput();
+                });
+            };
+        }
+
+        // 연차별 수온 입력창
+        function showYearlyTemperatureInput() {
+            dialogueActionsEl.innerHTML = `
+                <div class="input-container">
+                    <span>올해 수온:</span>
+                    <input type="number" id="yearlyTempInput" class="input-field" min="15" max="45" placeholder="15-45°C">
+                    <button class="confirm-btn" onclick="setYearlyTemperature()">확인</button>
+                </div>
+            `;
+        }
+
+        // 연차별 수온 설정
+        function setYearlyTemperature() {
+            const tempInput = document.getElementById('yearlyTempInput');
+            const value = parseInt(tempInput.value);
+            
+            if (isNaN(value) || value < 15 || value > 45) {
+                alert('15~45°C 범위 내에서 설정해주세요!');
+                return;
+            }
+            
+            gameState.temperature = value;
+            gameState.temperatureHistory[gameState.currentYear] = value; // 현재 연차에 온도 저장
+            updateDisplay(); // 우측 상단 수온 즉시 업데이트
+            
+            // 다음 연차(n+1년차)에 영향을 미칠 온도 스트레스 미리 계산 및 히스토리 추가
+            calculateTemperatureStressForNextYear();
+            
+            // 입력창 먼저 제거
+            dialogueActionsEl.innerHTML = '';
+            
+            // 수온 확인 대사
+            const confirmText = `올해 평균 수온은 ${value}°C 였구나. 좋아. 다음 해로 넘어가보자.`;
+            typeText(dialogueTextEl, confirmText, () => {
+                // 7년차인 경우 엘니뇨 이벤트 발생
+                if (gameState.currentYear === 7) {
+                    setTimeout(() => {
+                        showElNinoEvent();
+                    }, 1000);
+                } else {
+                    // 일반적인 연차 진행 완료 - 1년 후 버튼 활성화
+                    setTimeout(() => {
+                        showGameActions();
+                    }, 1000);
+                }
+            });
+        }
+
+        // 다음 연차의 온도 스트레스 계산 (히스토리 전용 - n년차 온도가 n+1년차에 영향)
+        function calculateTemperatureStressForNextYear() {
+            const T = gameState.temperature;
+            let stressChange = 0;
+            
+            // 고온 스트레스
+            const excess_hot = Math.max(0, T - 28);
+            stressChange += 1 * excess_hot;
+            if (T >= 31) {
+                stressChange += 1 * (T - 31);
+            }
+            
+            // 저온 스트레스
+            const excess_cold = Math.max(0, 18 - T);
+            stressChange += 0.5 * excess_cold;
+            
+            // 스트레스 적용 (미리 계산)
+            let futureStress = gameState.stress + stressChange;
+            
+            // 회복
+            if (T < 28) {
+                futureStress = Math.max(0, futureStress - 1);
+            }
+            
+            // 다음 연차(n+1년차)의 스트레스 상황을 히스토리에 미리 기록
+            const nextYear = gameState.currentYear + 1;
+            
+            // 스트레스가 있는 경우 히스토리 추가 (0년차도 포함)
+            if (excess_hot > 0 || excess_cold > 0) {
+                gameState.historyEvents.push(`${nextYear}년차: 온도 스트레스로 인한 개체군 위기 (현재 스트레스 지수: ${Math.floor(futureStress)})`);
+            } else if (futureStress > 0) {
+                gameState.historyEvents.push(`${nextYear}년차: 적정 수온에도 불구하고, 누적된 온도 스트레스로 인한 개체군 위기 (현재 스트레스 지수: ${Math.floor(futureStress)})`);
+            }
+            
+            // 디버깅을 위한 로그 (제거 가능)
+            console.log(`온도 ${T}°C 설정 → ${nextYear}년차 예상 스트레스: ${Math.floor(futureStress)}, excess_hot: ${excess_hot}, excess_cold: ${excess_cold}`);
+        }
+
+        // 2년차 소라게 찾기 이벤트
+        function showHermitCrabEvent() {
+            const eventSteps = [
+                "우리 말미잘들은 한번 자리잡으면 바닥에 붙어 고착생활을 하기 때문에 움직이기 힘들고 먹이를 잡아먹기가 힘들다.",
+                "앗.. 저기 보이는 것은 소라게? 소라게 무리가 말미잘에게 자신의 등에 타라며 손을 내밀었다.",
+                "처음 본 순간...~ 나는 빠져 버렸어...~ 오랫동안 찾고 찾던 짝꿍 소라핑...~",
+                "[미션] 나의 짝꿍 소라게를 찾자!",
+                "'멈춤' 버튼을 눌러, 내 운명의 소라게를 만나보세요."
+            ];
+            
+            let currentStep = 0;
+            
+            function showEventStep() {
+                if (currentStep < eventSteps.length) {
+                    typeText(eventTextEl, eventSteps[currentStep], () => {
+                        currentStep++;
+                        if (currentStep < eventSteps.length) {
+                            eventActionsEl.innerHTML = `<button class="event-next-btn" onclick="showEventStep()">▼</button>`;
+                        } else {
+                            startHermitCrabMinigame();
+                        }
+                    });
+                }
+            }
+            
+            eventActionsEl.innerHTML = '';
+            eventModalEl.style.display = 'flex';
+            showEventStep();
+            
+            window.showEventStep = showEventStep;
+        }
+
+       // 소라게 미니게임 시작 (선택 슬롯 테두리 표시)
+        function startHermitCrabMinigame() {
+            const minigameStyles = `
+                .minigame-area {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                    align-items: center;
+                    width: 100%;
+                    height: 100%;
+					max-height: 25em;
+                    padding: 1em; 
+                    box-sizing: border-box;
+                }
+                .minigame-area .all-slots-container {
+                    position: relative;
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 0.5em; 
+                    width: 100%;
+                    max-width: 19em; 
+					margin-top: 0.1em;
+                }
+                .minigame-area .slot-item-static {
+                    width: 100%;
+                    aspect-ratio: 1 / 1;
+                    border: 3px solid #60a5fa; /* 기본 테두리 두께 3px로 수정 */
+                    border-radius: 0.8em;
+                    background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+                    transition: all 0.3s ease; /* 테두리 변경 애니메이션 효과 */
+                }
+                
+                /* ★ 1. 선택된 슬롯을 위한 스타일 추가 */
+                .minigame-area .slot-item-static.selected {
+                    border-color: #f59e0b; /* 주황색 테두리 */
+                    box-shadow: 0 0 12px rgba(245, 158, 11, 0.6); /* 빛나는 효과 */
+                }
+
+                .minigame-area .moving-arrow {
+                    position: absolute;
+                    font-size: 2em; 
+                    color: #f59e0b;
+                    text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+                    animation-play-state: paused;
+                    transform: translateX(-50%);
+                    transition: opacity 0.3s ease;
+                }
+                #shellArrow { top: 33.3%; }
+                #clawArrow { top: 66.6%; }
+                #accArrow { top: 100%; }
+
+                @keyframes moveArrowHorizontal {
+                    0%   { left: 16.6%; }
+                    100% { left: 83.3%; }
+                }
+                .minigame-area .controls-container {
+                    width: 100%;
+                    margin-top: 1.2em; 
+                    text-align: center;
+                }
+            `;
+            const oldStyle = document.getElementById('minigame-style-final-compact');
+            if (oldStyle) oldStyle.remove();
+            const styleSheet = document.createElement("style");
+            styleSheet.id = 'minigame-style-final-compact';
+            styleSheet.innerText = minigameStyles;
+            document.head.appendChild(styleSheet);
+
+            eventActionsEl.innerHTML = `
+                <div class="minigame-area">
+                    <div class="all-slots-container">
+                        <div class="slot-item-static" id="shellItem1"><div class="slot-image" id="shellSlot1"></div></div>
+                        <div class="slot-item-static" id="shellItem2"><div class="slot-image" id="shellSlot2"></div></div>
+                        <div class="slot-item-static" id="shellItem3"><div class="slot-image" id="shellSlot3"></div></div>
+                        <div class="slot-item-static" id="clawItem1"><div class="slot-image" id="clawSlot1"></div></div>
+                        <div class="slot-item-static" id="clawItem2"><div class="slot-image" id="clawSlot2"></div></div>
+                        <div class="slot-item-static" id="clawItem3"><div class="slot-image" id="clawSlot3"></div></div>
+                        <div class="slot-item-static" id="accItem1"><div class="slot-image" id="accSlot1"></div></div>
+                        <div class="slot-item-static" id="accItem2"><div class="slot-image" id="accSlot2"></div></div>
+                        <div class="slot-item-static" id="accItem3"><div class="slot-image" id="accSlot3"></div></div>
+                        
+                        <div class="moving-arrow" id="shellArrow">🔺</div>
+                        <div class="moving-arrow" id="clawArrow" style="opacity: 0;">🔺</div>
+                        <div class="moving-arrow" id="accArrow" style="opacity: 0;">🔺</div>
+                    </div>
+                    <div class="controls-container">
+                        <button class="stop-btn" id="stopBtn">STOP</button>
+                    </div>
+                </div>
+            `;
+
+            const shellOptions = ['images/anemone_event_shell_1.png', 'images/anemone_event_shell_2.png', 'images/anemone_event_shell_3.png'];
+            const clawOptions = ['images/anemone_event_claw_1.png', 'images/anemone_event_claw_2.png', 'images/anemone_event_claw_1.png'];
+            const accessoryOptions = ['images/anemone_event_acc_1.png', 'images/anemone_event_acc_2.png', 'images/anemone_event_acc_3.png'];
+
+            shellOptions.forEach((img, i) => document.getElementById(`shellSlot${i + 1}`).style.backgroundImage = `url('${img}')`);
+            clawOptions.forEach((img, i) => document.getElementById(`clawSlot${i + 1}`).style.backgroundImage = `url('${img}')`);
+            accessoryOptions.forEach((img, i) => document.getElementById(`accSlot${i + 1}`).style.backgroundImage = `url('${img}')`);
+            
+            // 각 슬롯 아이템(테두리를 포함한 div)을 배열로 관리
+            const shellItems = [document.getElementById('shellItem1'), document.getElementById('shellItem2'), document.getElementById('shellItem3')];
+            const clawItems = [document.getElementById('clawItem1'), document.getElementById('clawItem2'), document.getElementById('clawItem3')];
+            const accItems = [document.getElementById('accItem1'), document.getElementById('accItem2'), document.getElementById('accItem3')];
+
+            const arrows = { shell: document.getElementById('shellArrow'), claw: document.getElementById('clawArrow'), acc: document.getElementById('accArrow') };
+            const stopBtn = document.getElementById('stopBtn');
+            let selectedIndexes = { shell: 1, claw: 1, acc: 1 };
+            let currentStage = 'shell';
+
+            arrows.shell.style.animation = 'moveArrowHorizontal 1.2s ease-in-out infinite alternate';
+            arrows.claw.style.animation = 'moveArrowHorizontal 1.0s ease-in-out infinite alternate';
+            arrows.acc.style.animation = 'moveArrowHorizontal 0.8s ease-in-out infinite alternate';
+            arrows.shell.style.animationPlayState = 'running';
+
+            stopBtn.addEventListener('click', () => {
+                if (currentStage === 'shell') {
+                    arrows.shell.style.animationPlayState = 'paused';
+                    const selectedIndex = getSelectedIndex(arrows.shell, shellItems);
+                    selectedIndexes.shell = selectedIndex + 1;
+                    
+                    // ★ 2. 선택된 슬롯에 'selected' 클래스 추가
+                    shellItems[selectedIndex].classList.add('selected');
+                    
+                    currentStage = 'claw';
+                    arrows.shell.style.opacity = 0;
+                    arrows.claw.style.opacity = 1;
+                    arrows.claw.style.animationPlayState = 'running';
+                } else if (currentStage === 'claw') {
+                    arrows.claw.style.animationPlayState = 'paused';
+                    const selectedIndex = getSelectedIndex(arrows.claw, clawItems);
+                    selectedIndexes.claw = selectedIndex + 1;
+                    
+                    // ★ 2. 선택된 슬롯에 'selected' 클래스 추가
+                    clawItems[selectedIndex].classList.add('selected');
+                    
+                    currentStage = 'acc';
+                    arrows.claw.style.opacity = 0;
+                    arrows.acc.style.opacity = 1;
+                    arrows.acc.style.animationPlayState = 'running';
+                } else if (currentStage === 'acc') {
+                    arrows.acc.style.animationPlayState = 'paused';
+                    const selectedIndex = getSelectedIndex(arrows.acc, accItems);
+                    selectedIndexes.acc = selectedIndex + 1;
+                    
+                    // ★ 2. 선택된 슬롯에 'selected' 클래스 추가
+                    accItems[selectedIndex].classList.add('selected');
+                    
+                    stopBtn.disabled = true;
+                    stopBtn.textContent = '완료!';
+                    arrows.acc.style.opacity = 0;
+                    setTimeout(() => {
+                        document.getElementById('minigame-style-final-compact').remove();
+                        endHermitCrabMinigame(selectedIndexes.shell, selectedIndexes.claw, selectedIndexes.acc);
+                    }, 1000);
+                }
+            });
+
+            function getSelectedIndex(arrowElement, slotElements) {
+                const arrowCenterX = arrowElement.getBoundingClientRect().left + (arrowElement.offsetWidth / 2);
+                let closestIndex = 0;
+                let minDistance = Infinity;
+                for (let i = 0; i < slotElements.length; i++) {
+                    const slotRect = slotElements[i].getBoundingClientRect();
+                    const slotCenterX = slotRect.left + (slotRect.width / 2);
+                    const distance = Math.abs(arrowCenterX - slotCenterX);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestIndex = i;
+                    }
+                }
+                return closestIndex;
+            }
+        }
+		
+        // 소라게 미니게임 종료
+		function endHermitCrabMinigame(shell, claw, accessory) {
+		const minigameArea = document.querySelector('.minigame-area');
+if (minigameArea) {
+    minigameArea.style.display = 'none';
+}
+
+    const resultImage = `images/anemone_event_${shell}${claw}${accessory}.png`;
+    
+    // 결과 이미지 표시
+	console.log('필요한 이미지:', resultImage);
+    const resultImageEl = document.createElement('div');
+    resultImageEl.className = 'result-image';
+    resultImageEl.style.backgroundImage = `url('${resultImage}')`;
+    document.body.appendChild(resultImageEl);
+    
+    playPositiveSound();
+	const existingResults = document.querySelectorAll('.result-animation, .result-image');
+	existingResults.forEach(el => {
+		if (el !== resultImageEl) {
+			el.remove();
+		}
+	});
+    
+    setTimeout(() => {
+        resultImageEl.remove();
+        
+        const successTexts = [
+            "나의 짝꿍 소라게를 만났다!",
+            "[효과] 말미잘 개체수 30% 증가"
+        ];
+        
+        gameState.population *= 1.3;
+        gameState.hermitCrabPartner = true;
+        gameState.historyEvents.push(`${gameState.currentYear}년차: 소라게와의 공생으로 말미잘 개체수 30% 증가`);
+        showEventResults(successTexts, true);
+    }, 7000);
+}
+
+        // 4년차 흰동가리 공생 이벤트
+        function showClownfishEvent() {
+            choiceEventImageEl.style.backgroundImage = "url('images/anemone_event_clownfish.png')";
+            
+            typeText(choiceEventTextEl, "니모를 닮은 흰동가리가 우리 말미잘을 찾아왔다. 자신이 먹이를 유인해올 테니, 무서운 애들로부터 자신을 숨겨달라는 제안을 해왔다.", () => {
+                choiceButtonsEl.classList.add('show');
+            });
+            
+            document.getElementById('choice1Btn').textContent = "제안을 승낙한다";
+            document.getElementById('choice2Btn').textContent = "제안을 거절한다";
+            
+            document.getElementById('choice1Btn').onclick = () => chooseClownfishOption(1);
+            document.getElementById('choice2Btn').onclick = () => chooseClownfishOption(2);
+            
+            choiceEventModalEl.style.display = 'flex';
+        }
+
+        function chooseClownfishOption(choice) {
+            choiceEventModalEl.style.display = 'none';
+			
+  eventActionsEl.innerHTML = '';
+  eventTextEl.textContent = '';
+            eventModalEl.style.display = 'flex';
+
+            if (choice === 1) {
+                // 승낙
+                playPositiveSound();
+                const successTexts = [
+                    "흰동가리와의 공생으로, 말미잘은 편하게 먹이를 먹고, 흰동가리는 편하게 포식자를 피할 수 있었다!",
+                    "[효과] 말미잘 개체수 20% 증가"
+                ];
+                
+                gameState.population *= 1.2;
+                gameState.clownfishPartner = true;
+                gameState.historyEvents.push(`${gameState.currentYear}년차: 흰동가리와 공생 관계를 맺으며, 말미잘 개체수 20% 증가`);
+                showEventResults(successTexts, true);
+            } else {
+                // 거절
+                playNegativeSound();
+                const failTexts = [
+                    "...승낙할 걸 그랬나 보다. 떠다니다가 센스 있게 말미잘 품으로 들어오는 먹이가 별로 없다.",
+                    "[효과] 말미잘 개체수 10% 감소"
+                ];
+                
+                gameState.population *= 0.9;
+                gameState.historyEvents.push(`${gameState.currentYear}년차: 흰동가리와의 공생이 불발되어, 말미잘 개체수 10% 감소`);
+                showEventResults(failTexts, false);
+            }
+        }
+
+        // 6년차 소라게 배신 이벤트
+        function showHermitCrabBetrayalEvent() {
+            const eventSteps = [
+                "요즘 먹이 구하기가 어려워지면서 소라게와의 사이가 조금 데면데면해진 것 같다.",
+                "비상비상!! 소라게들이 돌변하여 우리 말미잘을 잡아먹기 시작했다. 으악, 공생 관계는 무너졌어.",
+                "[효과] 소라게의 조건부 상리공생으로 급격한 태세 전환. 말미잘 개체수 30% 감소"
+            ];
+            
+            let currentStep = 0;
+            
+            function showEventStep() {
+                if (currentStep < eventSteps.length) {
+                    eventTextEl.className = 'event-text negative';
+                    typeText(eventTextEl, eventSteps[currentStep], () => {
+                        currentStep++;
+                        if (currentStep < eventSteps.length) {
+                            eventActionsEl.innerHTML = `<button class="event-next-btn" onclick="showEventStep()">▼</button>`;
+                        } else {
+                            eventActionsEl.innerHTML = `<button class="event-next-btn" onclick="closeHermitCrabBetrayalEvent()">완료</button>`;
+                        }
+                    });
+                }
+            }
+            
+            eventActionsEl.innerHTML = '';
+            eventModalEl.style.display = 'flex';
+            playNegativeSound();
+            showEventStep();
+            
+            window.showEventStep = showEventStep;
+            window.closeHermitCrabBetrayalEvent = () => {
+                eventModalEl.style.display = 'none';
+                
+                // 말미잘 개체수 30% 감소
+                gameState.population *= 0.7;
+                gameState.hermitCrabPartner = false;
+                gameState.historyEvents.push(`${gameState.currentYear}년차: 공생 관계였던 소라게와의 공생 관계가 깨지며, 소라게에게 포식 당해 개체수 30% 감소`);
+                
+                simulateEcosystem();
+                
+                // 히스토리 업데이트
+                gameState.populationHistory.push(gameState.population);
+                gameState.foodHistory.push(gameState.food);
+                
+                if (gameState.population <= 5) {
+                    showExtinctionEnding();
+                } else if (gameState.currentYear >= 10) {
+                    showSuccessEnding();
+                } else {
+                    showYearlyDialogue();
+                }
+                
+                updateDisplay();
+            };
+        }
+
+        // 7년차 엘니뇨 이벤트
+        function showElNinoEvent() {
+            const eventSteps = [
+                "올해 엘니뇨로 인해 평균 수온이 예상보다 3℃ 더 상승하였다.",
+                "갑작스런 수온 변화로, 흰동가리의 사망률과 번식률도 감소하여 말미잘생 최대 위기를 맞게 되었다.",
+                "[효과] 말미잘 개체수 50% 감소"
+            ];
+            
+            let currentStep = 0;
+            
+            function showEventStep() {
+                if (currentStep < eventSteps.length) {
+                    eventTextEl.className = 'event-text negative';
+                    typeText(eventTextEl, eventSteps[currentStep], () => {
+                        currentStep++;
+                        if (currentStep < eventSteps.length) {
+                            eventActionsEl.innerHTML = `<button class="event-next-btn" onclick="showEventStep()">▼</button>`;
+                        } else {
+                            eventActionsEl.innerHTML = `<button class="event-next-btn" onclick="closeElNinoEvent()">완료</button>`;
+                        }
+                    });
+                }
+            }
+            
+            eventActionsEl.innerHTML = '';
+            eventModalEl.style.display = 'flex';
+            playNegativeSound();
+            showEventStep();
+            
+            window.showEventStep = showEventStep;
+            window.closeElNinoEvent = () => {
+                eventModalEl.style.display = 'none';
+                
+                // 실제 수온 3도 상승
+                const originalTemp = gameState.temperature;
+                gameState.temperature += 3;
+                gameState.temperatureHistory[gameState.currentYear] = gameState.temperature; // 변경된 온도로 히스토리 업데이트
+                updateDisplay(); // 수온 표시 업데이트
+                
+                gameState.population *= 0.5; // 50% 감소
+                gameState.historyEvents.push(`${gameState.currentYear}년차: 엘니뇨로 인한 갑작스런 수온 상승 (${originalTemp}°C → ${gameState.temperature}°C)으로, 말미잘 개체 수 50% 감소`);
+                
+                // 온도 스트레스 적용 (변경된 온도 기준)
+                calculateTemperatureStress(gameState.temperature);
+                
+                simulateEcosystem();
+                
+                // 히스토리 업데이트
+                gameState.populationHistory.push(gameState.population);
+                gameState.foodHistory.push(gameState.food);
+                
+                if (gameState.population <= 5) {
+                    showExtinctionEnding();
+                } else if (gameState.currentYear >= 10) {
+                    showSuccessEnding();
+                } else {
+                    // 7년차 엘니뇨 이벤트 후 다음 해 진행
+                    showGameActions();
+                }
+                
+                updateDisplay();
+            };
+        }
+
+        // 이벤트 결과 표시
+        function showEventResults(texts, isPositive) {
+            let currentTextIndex = 0;
+            
+            function showNextText() {
+                if (currentTextIndex < texts.length) {
+                    eventTextEl.className = isPositive ? 'event-text positive' : 'event-text negative';
+                    typeText(eventTextEl, texts[currentTextIndex], () => {
+                        currentTextIndex++;
+                        if (currentTextIndex < texts.length) {
+                            eventActionsEl.innerHTML = `<button class="event-next-btn" onclick="showNextText()">▼</button>`;
+                        } else {
+                            eventActionsEl.innerHTML = `<button class="event-next-btn" onclick="closeEvent()">완료</button>`;
+                        }
+                    });
+                }
+            }
+            
+            window.showNextText = showNextText;
+            window.closeEvent = () => {
+                eventModalEl.style.display = 'none';
+                
+                simulateEcosystem();
+                
+                // 히스토리 업데이트
+                gameState.populationHistory.push(gameState.population);
+                gameState.foodHistory.push(gameState.food);
+                
+                if (gameState.population <= 5) {
+                    showExtinctionEnding();
+                } else if (gameState.currentYear >= 10) {
+                    showSuccessEnding();
+                } else {
+                    showYearlyDialogue();
+                }
+                
+                updateDisplay();
+            };
+            
+            showNextText();
+        }
+
+        // 게임 결과 애니메이션 표시
+        function showResultAnimation(isSuccess, callback) {
+            const animationEl = document.createElement('div');
+            animationEl.className = `result-animation ${isSuccess ? 'success' : 'failure'}`;
+            animationEl.textContent = isSuccess ? '🎉생존 성공!🎉' : '☠ 말미잘 절멸...☠ ';
+            
+            document.querySelector('.game-container').appendChild(animationEl);
+            
+            setTimeout(() => {
+                animationEl.remove();
+                if (callback) callback();
+            }, 2000);
+        }
+
+        // 절멸 엔딩
+        function showExtinctionEnding() {
+            gameState.gameEnded = true;
+            characterEl.style.backgroundImage = "url('images/anemone_dead.png')";
+            
+            playFailureSound();
+            showResultAnimation(false, () => {
+                typeText(dialogueTextEl, `우리 말미잘 개체군은 ${gameState.currentYear}년차에 역사 속으로 사라지게 되었어... ㅠㅠ `, () => {
+                    dialogueActionsEl.innerHTML = `
+                        <button class="action-btn secondary" onclick="restartGame()">재도전</button>
+                        <button class="action-btn danger" onclick="goToMain()">메인 화면</button>
+                        <button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>
+                    `;
+                    document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+                });
+            });
+        }
+
+        // 성공 엔딩
+        function showSuccessEnding() {
+            gameState.gameEnded = true;
+            characterEl.style.backgroundImage = "url('images/anemone_wow.png')";
+            
+            playSuccessSound();
+            showResultAnimation(true, () => {
+                typeText(dialogueTextEl, "고마워! 네 덕분에 우리 말미잘 개체군은 10년 동안 안정적인 개체군을 유지할 수 있었어!", () => {
+                    dialogueActionsEl.innerHTML = `
+                        <button class="action-btn" onclick="goToMain()">메인 화면</button>
+                        <button class="next-btn" id="showHistoryBtn" title="히스토리">📋</button>
+                    `;
+                    document.getElementById('showHistoryBtn').addEventListener('click', showHistory);
+                }, 'dialogue-text success');
+            });
+        }
+
+        // 디스플레이 업데이트
+        function updateDisplay() {
+            yearDisplayEl.textContent = `${gameState.currentYear}년차`;
+            populationDisplayEl.textContent = `개체수: ${Math.floor(gameState.population)}마리`;
+            foodDisplayEl.textContent = `플랑크톤: ${Math.floor(gameState.food)}마리`;
+            tempDisplayEl.textContent = `수온: ${gameState.temperature}°C`;
+        }
+
+        // 버튼 활성화/비활성화
+        function enableButtons() {
+            graphBtnEl.disabled = false;
+        }
+
+        function disableButtons() {
+            graphBtnEl.disabled = true;
+        }
+
+        // 로딩 표시
+        function showLoading() {
+            loadingOverlayEl.style.display = 'flex';
+            typeText(document.getElementById('loadingText'), '번식 중...');
+        }
+
+        function hideLoading() {
+            loadingOverlayEl.style.display = 'none';
+        }
+
+        // 그래프 표시
+        function showGraph() {
+            if (!gameState.dialogueComplete) return;
+
+            graphModalEl.style.display = 'flex';
+            
+            setTimeout(() => {
+                const canvas = document.getElementById('graphCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                const rect = canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                
+                const width = rect.width;
+                const height = rect.height;
+                const padding = 80;
+                const graphWidth = width - 2 * padding;
+                const graphHeight = height - 2 * padding;
+                
+                // 배경
+                ctx.fillStyle = '#fafbfc';
+                ctx.fillRect(0, 0, width, height);
+                
+                // 최대값 계산
+                const maxPop = Math.max(...gameState.populationHistory);
+                const maxFood = Math.max(...gameState.foodHistory);
+                const maxYear = gameState.populationHistory.length - 1;
+                
+                // 격자선
+                ctx.strokeStyle = '#e8ecf0';
+                ctx.lineWidth = 1;
+                
+                for (let i = 0; i <= 8; i++) {
+                    const y = padding + (i / 8) * graphHeight;
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(width - padding, y);
+                    ctx.stroke();
+                }
+                
+                for (let i = 0; i <= maxYear; i++) {
+                    const x = padding + (i / maxYear) * graphWidth;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding);
+                    ctx.lineTo(x, height - padding);
+                    ctx.stroke();
+                }
+                
+                // 축
+                ctx.strokeStyle = '#2d3748';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, height - padding);
+                ctx.moveTo(width - padding, padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.moveTo(padding, height - padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.stroke();
+                
+                // 말미잘 개체수 선 (분홍색, 왼쪽 축 기준)
+                if (gameState.populationHistory.length > 1) {
+                    ctx.strokeStyle = '#ec4899';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    
+                    for (let i = 0; i < gameState.populationHistory.length; i++) {
+                        const x = padding + (i / maxYear) * graphWidth;
+                        const y = height - padding - (gameState.populationHistory[i] / maxPop) * graphHeight;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+                }
+                
+                // 플랑크톤 개체수 선 (청록색, 오른쪽 축 기준)
+                if (gameState.foodHistory.length > 1) {
+                    ctx.strokeStyle = '#06b6d4';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    
+                    for (let i = 0; i < gameState.foodHistory.length; i++) {
+                        const x = padding + (i / maxYear) * graphWidth;
+                        const y = height - padding - (gameState.foodHistory[i] / maxFood) * graphHeight;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+                }
+                
+                // 레이블
+                ctx.fillStyle = '#4a5568';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                
+                // X축 레이블
+                for (let i = 0; i <= maxYear; i++) {
+                    const x = padding + (i / maxYear) * graphWidth;
+                    ctx.fillText(`${i}년`, x, height - padding + 20);
+                }
+                
+                // 왼쪽 Y축 레이블 (말미잘)
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#ec4899';
+                for (let i = 0; i <= 8; i++) {
+                    const y = height - padding - (i / 8) * graphHeight;
+                    const value = Math.round((i / 8) * maxPop);
+                    ctx.fillText(`${value}`, padding - 10, y + 4);
+                }
+                
+                // 오른쪽 Y축 레이블 (플랑크톤)
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#06b6d4';
+                for (let i = 0; i <= 8; i++) {
+                    const y = height - padding - (i / 8) * graphHeight;
+                    const value = Math.round((i / 8) * maxFood);
+                    ctx.fillText(`${value}`, width - padding + 10, y + 4);
+                }
+                
+                // 범례
+                ctx.fillStyle = '#ec4899';
+                ctx.fillRect(width / 2 - 80, 30, 20, 3);
+                ctx.fillStyle = '#4a5568';
+                ctx.textAlign = 'left';
+                ctx.fillText('말미잘 개체수', width / 2 - 55, 35);
+                
+                ctx.fillStyle = '#06b6d4';
+                ctx.fillRect(width / 2 - 80, 50, 20, 3);
+                ctx.fillStyle = '#4a5568';
+                ctx.fillText('플랑크톤 개체수', width / 2 - 55, 55);
+            }, 100);
+        }
+
+        // 히스토리 표시
+        function showHistory() {
+            if (!gameState.dialogueComplete) return;
+
+            historyModalEl.style.display = 'flex';
+            
+            let historyText = '';
+            for (let i = 0; i < gameState.populationHistory.length; i++) {
+                historyText += `${i}년차: 말미잘 ${Math.floor(gameState.populationHistory[i])}마리`;
+                if (gameState.foodHistory[i] !== undefined) {
+                    historyText += `, 플랑크톤 ${Math.floor(gameState.foodHistory[i])}마리`;
+                }
+                if (gameState.temperatureHistory[i] !== undefined) {
+                    historyText += `, 수온 ${gameState.temperatureHistory[i]}°C`;
+                }
+                historyText += '\n';
+            }
+            
+            // 이벤트 히스토리 추가
+            if (gameState.historyEvents.length > 0) {
+                historyText += '\n=== 주요 사건 ===\n';
+                gameState.historyEvents.forEach(event => {
+                    historyText += event + '\n';
+                });
+            }
+            
+            historyContentEl.textContent = historyText;
+        }
+
+        // 모달 닫기
+        function hideGraph() {
+            graphModalEl.style.display = 'none';
+        }
+
+        function hideHistory() {
+            historyModalEl.style.display = 'none';
+        }
+
+        // 게임 재시작/종료
+        function restartGame() {
+            location.reload();
+        }
+
+        function goToMain() {
+            window.location.href = 'intro.html';
+        }
+
+        function goBack() {
+            window.location.href = 'game.html';
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDisplay();
+            disableButtons();
+            
+            // 첫 번째 대사 시작하고 dialogueStep 증가
+            typeText(dialogueTextEl, initialDialogues[0]);
+            gameState.dialogueStep = 1;
+            
+            // 이벤트 리스너
+            backBtnEl.addEventListener('click', goBack);
+            graphBtnEl.addEventListener('click', showGraph);
+            document.getElementById('closeGraphBtn').addEventListener('click', hideGraph);
+            document.getElementById('closeHistoryBtn').addEventListener('click', hideHistory);
+            document.getElementById('nextBtn').addEventListener('click', nextDialogue);
+        });
+    </script>
+</body>
+</html>
